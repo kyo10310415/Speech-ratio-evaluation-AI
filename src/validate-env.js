@@ -21,7 +21,7 @@ async function validateEnvironment() {
     logger.info('\nConfiguration summary:');
     logger.info(`  Google Sheets ID: ${config.googleSheetsId}`);
     logger.info(`  Service Account: ${config.googleServiceAccountEmail}`);
-    logger.info(`  OpenAI API Key: ${config.openaiApiKey ? '✓ Set' : '✗ Missing'}`);
+    logger.info(`  Google AI API Key (Gemini): ${config.googleAiApiKey ? '✓ Set' : '✗ Missing'}`);
     logger.info(`  AssemblyAI API Key: ${config.assemblyaiApiKey ? '✓ Set' : '○ Optional'}`);
     logger.info(`  Timezone: ${config.timezone}`);
     logger.info(`  Temp Directory: ${config.tempDir}`);
