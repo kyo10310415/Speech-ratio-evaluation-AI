@@ -1,5 +1,5 @@
 import { logger } from '../utils/logger.js';
-import { geminiService } from './geminiService.js';
+import { geminiService } from '../services/geminiService.js';
 
 class EmotionAnalyzer {
   constructor() {
