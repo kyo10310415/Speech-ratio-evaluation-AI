@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "daily": "node src/jobs/daily.js",
     "weekly": "node src/jobs/weekly.js",
+    "validate": "node src/validate-env.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "dev": "node --watch src/index.js"
   },
