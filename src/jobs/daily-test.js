@@ -16,6 +16,9 @@ import {
 /**
  * Daily job TEST: Process only FIRST ROW from input sheet
  * For testing purposes - processes only the first tutor record
+ * Usage: 
+ *   npm run daily:test              # Use previous day (default)
+ *   npm run daily:test 2026-01-04   # Test with specific date
  */
 export async function runDailyJobTest() {
   const startTime = Date.now();
@@ -27,8 +30,15 @@ export async function runDailyJobTest() {
     // Validate configuration
     validateConfig();
 
-    // Get date range (previous day in JST)
-    const { startDate, endDate, dateStr } = getDailyDateRange();
+    // Get date from command line args or use previous day
+    const testDate = process.argv[2]; // e.g., "2026-01-04"
+    
+    if (testDate) {
+      logger.warn(`⚠️  TEST DATE MODE: Using specified date ${testDate}`);
+    }
+
+    // Get date range (with optional test date)
+    const { startDate, endDate, dateStr } = getDailyDateRange(testDate);
     logger.info(`Processing date: ${dateStr}`);
     logger.info(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 

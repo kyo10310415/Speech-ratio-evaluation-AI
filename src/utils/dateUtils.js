@@ -6,19 +6,28 @@ const TZ = config.timezone;
 
 /**
  * Get date range for daily job (previous day in JST)
+ * @param {string} testDate - Optional test date in yyyy-MM-dd format (for testing)
  * @returns {Object} { startDate, endDate, dateStr }
  */
-export function getDailyDateRange() {
-  const now = toZonedTime(new Date(), TZ);
-  const yesterday = subDays(now, 1);
+export function getDailyDateRange(testDate = null) {
+  let targetDate;
   
-  // Start: yesterday 00:00:00 JST
-  const startDate = new Date(formatInTimeZone(yesterday, TZ, 'yyyy-MM-dd') + 'T00:00:00+09:00');
+  if (testDate) {
+    // Test mode: use specified date
+    targetDate = toZonedTime(new Date(testDate + 'T12:00:00+09:00'), TZ);
+  } else {
+    // Production mode: use previous day
+    const now = toZonedTime(new Date(), TZ);
+    targetDate = subDays(now, 1);
+  }
   
-  // End: yesterday 23:59:59 JST
-  const endDate = new Date(formatInTimeZone(yesterday, TZ, 'yyyy-MM-dd') + 'T23:59:59+09:00');
+  // Start: target day 00:00:00 JST
+  const startDate = new Date(formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd') + 'T00:00:00+09:00');
   
-  const dateStr = formatInTimeZone(yesterday, TZ, 'yyyy-MM-dd');
+  // End: target day 23:59:59 JST
+  const endDate = new Date(formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd') + 'T23:59:59+09:00');
+  
+  const dateStr = formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd');
   
   return { startDate, endDate, dateStr };
 }
