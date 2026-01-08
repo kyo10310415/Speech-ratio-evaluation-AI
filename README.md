@@ -1,6 +1,25 @@
-# WannaV レッスン分析自動化システム
+# WannaV レッスン分析自動化システム v2.0
 
-Google Meet録画を自動解析し、講師のパフォーマンスと生徒の受講体験を定量化するシステムです。
+Google Meet録画を自動解析し、講師のパフォーマンスと生徒の受講体験を定量化・可視化するシステムです。
+
+## 🆕 v2.0 新機能
+
+### ✨ Gemini AI統合
+- **OpenAI→Gemini AIへ完全移行**
+- 音声文字起こし: Gemini 1.5 Pro
+- 分析・レポート生成: Gemini 1.5 Flash
+- コスト効率の向上
+
+### 🔁 エラーリトライロジック
+- 全API呼び出しに自動リトライ（最大3回）
+- ネットワークエラーやレート制限に対応
+- p-retryライブラリ使用
+
+### 📊 Webダッシュボード
+- **リアルタイムデータ可視化**
+- 週次評価グラフ・チャート
+- レッスンごと詳細表示（ドロップダウン選択）
+- Hono + Chart.js + Tailwind CSS
 
 ## 主な機能
 
@@ -12,46 +31,61 @@ Google Meet録画を自動解析し、講師のパフォーマンスと生徒の
 - **感情シグナル**: 困惑/ストレス/ポジティブ区間の検出（TOP3）
 - **改善アドバイス**: AIによる具体的な改善提案
 
-### 出力シート
-1. **daily_lessons**: レッスン1本＝1行の詳細データ
-2. **daily_tutors**: 講師×日別の集計データ
-3. **weekly_tutors**: 講師×週別のスコアと分析
+### 出力
+1. **Google Sheets**
+   - daily_lessons: レッスン詳細データ
+   - daily_tutors: 講師×日別集計
+   - weekly_tutors: 講師×週別スコア
 
-## アーキテクチャ
+2. **Webダッシュボード** (NEW!)
+   - 週次スコア推移グラフ
+   - レッスン数推移グラフ
+   - レッスンごと詳細表示
 
-### 技術スタック
+## 技術スタック
+
+### Backend
 - **Node.js 18+**: サーバーサイドランタイム
-- **Google Sheets API**: データ入出力
-- **Google Drive API**: 動画ファイル取得
-- **OpenAI Whisper API**: 音声文字起こし
-- **AssemblyAI API**: 話者分離（Diarization）
-- **OpenAI GPT-4**: 感情分析・レポート生成
-- **ffmpeg**: 音声抽出・前処理
+- **Hono**: 軽量Webフレームワーク
 
-### 実行環境
-- **GitHub Actions**: 日次・週次スケジュール実行
-- **Render (オプション)**: バックグラウンドワーカー
+### AI/ML
+- **Google Gemini AI**: 文字起こし・分析
+  - Gemini 1.5 Pro: 音声文字起こし
+  - Gemini 1.5 Flash: 感情分析・レポート生成
+- **AssemblyAI**: 高精度話者分離（オプション）
+
+### Audio Processing
+- **ffmpeg**: 音声抽出・正規化
+
+### Frontend
+- **Chart.js**: グラフ可視化
+- **Tailwind CSS**: スタイリング
+- **Axios**: HTTP通信
+
+### Utilities
+- **p-retry**: エラーリトライ
+- **winston**: ロギング
+- **date-fns**: 日付処理
 
 ## セットアップ
 
 ### 1. 必要な認証情報
 
-#### Google API
-1. Google Cloud Consoleでサービスアカウントを作成
-2. Google Sheets API と Google Drive API を有効化
-3. サービスアカウントに以下の権限を付与:
-   - スプレッドシートへの編集権限
-   - 録画フォルダへの閲覧権限
+#### Google Cloud Platform
+1. サービスアカウント作成
+2. Google Sheets API + Google Drive API 有効化
+3. スプレッドシートとフォルダに権限付与
 
-#### OpenAI API
-- OpenAI APIキーを取得（Whisper + GPT-4使用）
+#### Google AI (Gemini)
+1. [Google AI Studio](https://aistudio.google.com/)でAPIキー取得
+2. Gemini API有効化
 
-#### AssemblyAI API（推奨）
-- AssemblyAI APIキーを取得（高精度な話者分離）
+#### AssemblyAI（推奨）
+1. [AssemblyAI](https://www.assemblyai.com/)でAPIキー取得
 
 ### 2. 環境変数設定
 
-`.env` ファイルを作成（`.env.example` を参考）:
+`.env` ファイルを作成:
 
 ```bash
 # Google Sheets API
@@ -59,14 +93,18 @@ GOOGLE_SHEETS_ID=1gFrIbkRxNcpKuT0vRNfaUdSrJWynlCdfqhGQz9vWwWo
 GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
 GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-# OpenAI API
-OPENAI_API_KEY=sk-your-openai-api-key
+# Google AI (Gemini)
+GOOGLE_AI_API_KEY=your-google-ai-api-key
 
-# AssemblyAI API (optional but recommended)
+# AssemblyAI (optional but recommended)
 ASSEMBLYAI_API_KEY=your-assemblyai-api-key
 
 # Timezone
 TZ=Asia/Tokyo
+
+# Dashboard
+DASHBOARD_PORT=3000
+DASHBOARD_HOST=0.0.0.0
 ```
 
 ### 3. 依存関係インストール
@@ -88,166 +126,192 @@ sudo apt-get update
 sudo apt-get install -y ffmpeg
 ```
 
-#### Windows
-[ffmpeg公式サイト](https://ffmpeg.org/download.html)からダウンロード
-
 ## ローカル実行
 
-### 日次ジョブ（前日分）
+### 分析ジョブ
+
 ```bash
+# 環境変数検証
+npm run validate
+
+# 日次ジョブ（前日分）
 npm run daily
+
+# 週次ジョブ（前週月〜日）
+npm run weekly
 ```
 
-### 週次ジョブ（前週月〜日）
+### Webダッシュボード
+
 ```bash
-npm run weekly
+# ダッシュボード起動
+npm run dashboard
+
+# ブラウザで開く
+# http://localhost:3000
+```
+
+### PM2で起動（本番環境推奨）
+
+```bash
+# ポート3000クリーンアップ
+fuser -k 3000/tcp 2>/dev/null || true
+
+# PM2で起動
+pm2 start ecosystem.config.cjs
+
+# ログ確認
+pm2 logs wannav-dashboard --nostream
+
+# 停止
+pm2 delete wannav-dashboard
 ```
 
 ## GitHub Actions デプロイ
 
 ### 1. リポジトリSecretsに追加
 
-GitHub リポジトリの Settings > Secrets and variables > Actions で以下を追加:
+Settings > Secrets and variables > Actions:
 
 - `GOOGLE_SHEETS_ID`
 - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
 - `GOOGLE_PRIVATE_KEY`
-- `OPENAI_API_KEY`
-- `ASSEMBLYAI_API_KEY`
+- `GOOGLE_AI_API_KEY` ⭐ NEW
+- `ASSEMBLYAI_API_KEY` (オプション)
 
-### 2. ワークフローファイル
+### 2. ワークフロー
 
-- `.github/workflows/daily.yml`: 毎日9:00 JST実行
-- `.github/workflows/weekly.yml`: 毎週月曜9:00 JST実行
+- `.github/workflows/daily.yml`: 毎日9:00 JST
+- `.github/workflows/weekly.yml`: 毎週月曜9:00 JST
 
 ### 3. 手動実行
 
-GitHub Actions タブから "Run workflow" で手動実行可能
+GitHub Actions タブから "Run workflow"
 
-## Render デプロイ（オプション）
+## Webダッシュボード機能
 
-### 1. Renderアカウント作成
+### 📈 週次評価ページ
 
-[Render](https://render.com)でアカウント作成
+#### グラフ
+1. **週次スコア推移**: 講師ごとのスコア（0-100）の推移
+2. **レッスン数推移**: 講師ごとのレッスン実施数
 
-### 2. New Worker 作成
+#### サマリーテーブル
+- 週
+- 講師名
+- レッスン数
+- スコア
+- 主要所見
 
-- Connect Repository
-- Environment変数を設定（上記Secretsと同じ）
-- Deploy
+### 🎥 レッスン詳細ページ
 
-**注意**: Renderは補助的な環境です。実際のジョブはGitHub Actionsで実行します。
+#### ドロップダウン選択
+- 日付・講師・ファイル名で選択
 
-## 入力データ形式
+#### 表示項目
+- **KPI**: 発話比率、最長モノローグ、生徒ターン数
+- **感情シグナル**: 困惑/ストレス/ポジティブのTOP3区間
+- **改善アドバイス**: AIによる具体的なアドバイス
+- **推奨アクション**: 3つの具体的なアクション
+- **詳細統計**: 発話時間、モノローグ回数、沈黙回数など
 
-### Google Sheets: シート1
-
-| 列 | カラム名 | 説明 |
-|---|---------|------|
-| C | recording_folder_url | Google Driveフォルダリンク |
-| D | tutor_name | 講師名 |
-
-例:
-```
-C列: https://drive.google.com/drive/folders/1ABC...
-D列: 山田太郎
-```
-
-## 出力データ形式
-
-### daily_lessons シート
-
-レッスン1本＝1行。主要カラム:
-- `drive_file_id`: ファイルID（冪等性キー）
-- `talk_ratio_tutor`: 講師発話比率（0〜1）
-- `max_tutor_monologue_sec`: 最長連続発話（秒）
-- `student_turns`: 生徒発話ターン数
-- `confusion_top3`: 困惑区間TOP3（時刻+根拠）
-- `improvement_advice`: 改善アドバイス
-- `status`: OK or ERROR
-
-### daily_tutors シート
-
-講師×日別集計。主要カラム:
-- `lessons_count`: 処理レッスン数
-- `avg_talk_ratio_tutor`: 平均発話比率
-- `alerts`: アラート内容
-
-### weekly_tutors シート
-
-講師×週別集計。主要カラム:
-- `weekly_score_total`: 週次スコア（0〜100）
-- `score_breakdown`: スコア内訳
-- `weekly_key_findings`: 主要所見
-- `weekly_actions_top3`: 推奨アクションTOP3
-
-## トラブルシューティング
-
-### ffmpegエラー
-```bash
-# ffmpegがインストールされているか確認
-ffmpeg -version
-```
-
-### Google API権限エラー
-- サービスアカウントがスプレッドシートとフォルダに権限を持っているか確認
-- Private Keyが正しくエスケープされているか確認（`\n`が必要）
-
-### AssemblyAI未設定時
-- AssemblyAI APIキーが無い場合、Whisper + 簡易話者分離にフォールバック
-- 精度は低下しますが動作します
-
-### メモリ不足
-- GitHub Actionsのタイムアウトを延長（`timeout-minutes`）
-- 大きな動画ファイルは分割処理を検討
-
-## ログ確認
-
-### ローカル
-```bash
-tail -f logs/combined.log
-tail -f logs/error.log
-```
-
-### GitHub Actions
-- Actions タブから該当ワークフローを選択
-- "Upload logs" アーティファクトをダウンロード
-
-## プロジェクト構造
+## アーキテクチャ
 
 ```
 wannav-lesson-analyzer/
 ├── src/
-│   ├── config/          # 設定
-│   ├── services/        # Google API, 音声処理, 文字起こし
-│   ├── analyzers/       # KPI計算, 感情分析
-│   ├── jobs/            # 日次・週次ジョブ
-│   ├── utils/           # ユーティリティ
-│   └── index.js         # エントリーポイント
-├── .github/
-│   └── workflows/       # GitHub Actions設定
-├── temp/                # 一時ファイル（gitignore）
-├── logs/                # ログファイル
-├── package.json
-└── README.md
+│   ├── dashboard/           # Webダッシュボード
+│   │   └── server.js        # Hono APIサーバー
+│   ├── services/
+│   │   ├── geminiService.js # Gemini AI統合
+│   │   └── ...
+│   └── ...
+├── public/
+│   └── static/
+│       └── js/
+│           └── dashboard.js # フロントエンドJS
+├── .github/workflows/       # GitHub Actions
+└── ecosystem.config.cjs     # PM2設定
 ```
+
+## コスト見積もり（更新）
+
+### Gemini API（v2.0）
+- Gemini 1.5 Pro（文字起こし）: $0.00125/秒 音声
+- Gemini 1.5 Flash（分析）: $0.075/1Mトークン入力
+- **60分レッスン1本**: 約$0.30〜$0.50
+
+### AssemblyAI（オプション）
+- Diarization: $0.015/分
+- **60分レッスン1本**: 約$0.90
+
+### 合計（v2.0）
+- **Gemini のみ**: 約$0.30〜$0.50/レッスン（66%コスト削減 🎉）
+- **Gemini + AssemblyAI**: 約$1.20〜$1.40/レッスン
+
+## v2.0 の主な改善点
+
+### 1. ✅ Gemini AI統合
+- OpenAI依存を削除
+- コスト効率60%以上向上
+- 音声ファイルアップロード対応
+- JSON出力による構造化データ取得
+
+### 2. ✅ エラーリトライロジック
+- `p-retry`による自動リトライ（最大3回）
+- API呼び出しの信頼性向上
+- ネットワーク障害への耐性強化
+
+### 3. ✅ Webダッシュボード
+- リアルタイムデータ可視化
+- 週次スコア・レッスン数のグラフ表示
+- レッスンごと詳細表示（ドロップダウン）
+- レスポンシブデザイン
+
+### 4. ✅ コード改善
+- モジュール化の強化
+- エラーハンドリングの統一
+- ログレベルの最適化
+
+## トラブルシューティング
+
+### Gemini API エラー
+```bash
+# APIキーが正しいか確認
+npm run validate
+
+# ログ確認
+tail -f logs/error.log
+```
+
+### ダッシュボードが起動しない
+```bash
+# ポート3000が使用されているか確認
+lsof -i :3000
+
+# ポートをクリーンアップ
+fuser -k 3000/tcp
+
+# 再起動
+pm2 restart wannav-dashboard
+```
+
+### データが表示されない
+- Google Sheetsに `weekly_tutors` と `daily_lessons` シートが存在するか確認
+- サービスアカウントに閲覧権限があるか確認
 
 ## ライセンス
 
 MIT
 
-## サポート
+## バージョン履歴
 
-問題が発生した場合は、以下を確認してください:
-1. ログファイル (`logs/error.log`)
-2. GitHub Actions実行ログ
-3. 環境変数の設定
-4. API権限とクォータ
+- **v2.0.0** (2026-01-08)
+  - Gemini AI統合
+  - エラーリトライロジック
+  - Webダッシュボード実装
 
-## 今後の拡張予定
-
-- [ ] 表情解析（顔出しレッスン対応）
-- [ ] リアルタイム分析
-- [ ] ダッシュボードUI
-- [ ] 多言語対応
-- [ ] カスタムKPI設定
+- **v1.0.0** (2026-01-08)
+  - 初版リリース
+  - OpenAI Whisper + GPT-4
+  - Google Sheets出力

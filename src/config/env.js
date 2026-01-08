@@ -13,8 +13,8 @@ export const config = {
   googleServiceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
   googlePrivateKey: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   
-  // OpenAI API
-  openaiApiKey: process.env.OPENAI_API_KEY,
+  // Google AI (Gemini) API
+  googleAiApiKey: process.env.GOOGLE_AI_API_KEY,
   
   // AssemblyAI API
   assemblyaiApiKey: process.env.ASSEMBLYAI_API_KEY,
@@ -29,6 +29,10 @@ export const config = {
   
   // Log level
   logLevel: process.env.LOG_LEVEL || 'info',
+  
+  // Dashboard
+  dashboardPort: parseInt(process.env.DASHBOARD_PORT || '3000'),
+  dashboardHost: process.env.DASHBOARD_HOST || '0.0.0.0',
 };
 
 // Validation
@@ -37,7 +41,7 @@ export function validateConfig() {
     'googleSheetsId',
     'googleServiceAccountEmail',
     'googlePrivateKey',
-    'openaiApiKey',
+    'googleAiApiKey',
   ];
   
   const missing = required.filter(key => !config[key]);
