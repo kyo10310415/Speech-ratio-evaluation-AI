@@ -53,9 +53,9 @@ class DriveService {
   }
 
   /**
-   * List subfolders with yyyy-mm naming pattern
+   * List subfolders with yyyy-mm or yyyy年mm月 naming pattern
    * @param {string} parentFolderId 
-   * @returns {Array} Array of subfolders
+   * @returns {Array} Array of subfolders with normalized names
    */
   async listMonthFolders(parentFolderId) {
     try {
@@ -73,12 +73,23 @@ class DriveService {
 
       const folders = response.data.files || [];
       
-      // Filter folders with yyyy-mm pattern
-      const monthFolders = folders.filter(folder => {
-        return /^\d{4}-\d{2}$/.test(folder.name);
-      });
+      // Filter and normalize folders with month patterns
+      const monthFolders = [];
+      for (const folder of folders) {
+        const normalized = this.normalizeMonthFolderName(folder.name);
+        if (normalized) {
+          monthFolders.push({
+            id: folder.id,
+            name: folder.name,           // Original name
+            normalizedName: normalized,  // yyyy-mm format
+          });
+        }
+      }
 
-      logger.info(`Found ${monthFolders.length} month folders (yyyy-mm) in parent folder ${parentFolderId}`);
+      logger.info(`Found ${monthFolders.length} month folders in parent folder ${parentFolderId}`);
+      if (monthFolders.length > 0) {
+        logger.info(`Month folders: ${monthFolders.map(f => f.name).join(', ')}`);
+      }
       return monthFolders;
     } catch (error) {
       logger.error(`Failed to list month folders in ${parentFolderId}`, error);
@@ -87,8 +98,34 @@ class DriveService {
   }
 
   /**
+   * Normalize month folder name to yyyy-mm format
+   * Supports patterns: yyyy-mm, yyyy年mm月, yyyy年m月
+   * @param {string} folderName 
+   * @returns {string|null} Normalized yyyy-mm or null if not a month folder
+   */
+  normalizeMonthFolderName(folderName) {
+    // Pattern 1: yyyy-mm (e.g., "2026-01")
+    const pattern1 = /^(\d{4})-(\d{2})$/;
+    const match1 = folderName.match(pattern1);
+    if (match1) {
+      return `${match1[1]}-${match1[2]}`;
+    }
+
+    // Pattern 2: yyyy年mm月 or yyyy年m月 (e.g., "2025年11月", "2025年9月")
+    const pattern2 = /^(\d{4})年(\d{1,2})月$/;
+    const match2 = folderName.match(pattern2);
+    if (match2) {
+      const year = match2[1];
+      const month = match2[2].padStart(2, '0');  // Zero padding
+      return `${year}-${month}`;
+    }
+
+    return null;
+  }
+
+  /**
    * List video files in folder within date range
-   * Searches in yyyy-mm subfolders based on date range
+   * Searches in month subfolders based on date range
    * @param {string} parentFolderId 
    * @param {Date} startDate 
    * @param {Date} endDate 
@@ -96,11 +133,11 @@ class DriveService {
    */
   async listVideosInFolder(parentFolderId, startDate, endDate) {
     try {
-      // Get all month folders (yyyy-mm)
+      // Get all month folders (normalized to yyyy-mm)
       const monthFolders = await this.listMonthFolders(parentFolderId);
       
       if (monthFolders.length === 0) {
-        logger.warn(`No yyyy-mm subfolders found in ${parentFolderId}`);
+        logger.warn(`No month subfolders found in ${parentFolderId}`);
         return [];
       }
 
@@ -108,9 +145,9 @@ class DriveService {
       const targetMonths = this.getTargetMonths(startDate, endDate);
       logger.info(`Target months for date range: ${targetMonths.join(', ')}`);
 
-      // Filter folders that match target months
+      // Filter folders that match target months (using normalized names)
       const relevantFolders = monthFolders.filter(folder => 
-        targetMonths.includes(folder.name)
+        targetMonths.includes(folder.normalizedName)
       );
 
       if (relevantFolders.length === 0) {
