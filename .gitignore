@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# Temp files
+temp/
+tmp/
+*.tmp
+
+# Audio/Video temp files
+downloads/
+audio_extracts/
+*.wav
+*.mp3
+*.mp4
+*.mov
+
+# Google API credentials
+credentials.json
+token.json
+service-account.json
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# PM2
+.pm2/
+
+# Backup
+*.backup
+*.bak
