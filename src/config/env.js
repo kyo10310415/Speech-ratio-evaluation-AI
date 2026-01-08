@@ -4,6 +4,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const projectRoot = join(__dirname, '../..');
 
 dotenv.config({ path: join(__dirname, '../../.env') });
 
@@ -22,10 +23,10 @@ export const config = {
   // Timezone
   timezone: process.env.TZ || 'Asia/Tokyo',
   
-  // Directories
-  tempDir: process.env.TEMP_DIR || './temp',
-  downloadsDir: process.env.DOWNLOADS_DIR || './temp/downloads',
-  audioDir: process.env.AUDIO_DIR || './temp/audio',
+  // Directories (use absolute paths)
+  tempDir: process.env.TEMP_DIR || join(projectRoot, 'temp'),
+  downloadsDir: process.env.DOWNLOADS_DIR || join(projectRoot, 'temp', 'downloads'),
+  audioDir: process.env.AUDIO_DIR || join(projectRoot, 'temp', 'audio'),
   
   // Log level
   logLevel: process.env.LOG_LEVEL || 'info',
