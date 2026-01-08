@@ -13,6 +13,7 @@
     "validate": "node src/validate-env.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "test:drive": "node src/test-drive-folders.js",
+    "debug:dates": "node src/debug-video-dates.js",
     "test:auth": "node src/test-auth-detailed.js",
     "dev": "node --watch src/index.js",
     "dev:dashboard": "node --watch src/dashboard/server.js"
