@@ -30,22 +30,22 @@ class SheetsService {
   }
 
   /**
-   * Read input data from シート1
+   * Read input data from 新フォルダURL sheet
    * @returns {Array} Array of tutor records { tutorName, folderUrl }
    */
   async readInputSheet() {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: 'シート1!A2:D', // From row 2 onwards
+        range: '新フォルダURL!A2:D', // From row 2 onwards
       });
 
       const rows = response.data.values || [];
-      logger.info(`Read ${rows.length} rows from シート1`);
+      logger.info(`Read ${rows.length} rows from 新フォルダURL sheet`);
 
       return rows.map(row => ({
-        tutorName: row[3] || '', // D column (index 3)
-        folderUrl: row[2] || '', // C column (index 2)
+        tutorName: row[0] || '',     // A column: 講師名 (index 0)
+        folderUrl: row[2] || '',     // C column: 新しいフォルダURL (index 2)
       })).filter(record => record.tutorName && record.folderUrl);
     } catch (error) {
       logger.error('Failed to read input sheet', error);
