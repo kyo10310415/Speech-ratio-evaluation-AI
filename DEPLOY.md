@@ -1,4 +1,14 @@
-# デプロイガイド
+# デプロイガイド v2.0
+
+## v2.0 変更点
+
+### ✅ Gemini AI統合
+- **OpenAI → Google Gemini AI**へ完全移行
+- APIキーが`GOOGLE_AI_API_KEY`に変更
+
+### ✅ Webダッシュボード追加
+- ポート3000でHonoサーバー起動
+- PM2による本番環境デプロイ
 
 ## 前提条件
 
@@ -7,9 +17,9 @@
    - Google Sheets API有効化
    - Google Drive API有効化
 
-2. **OpenAI アカウント**
+2. **Google AI (Gemini) アカウント** ⭐ NEW
+   - [Google AI Studio](https://aistudio.google.com/)
    - APIキー取得
-   - 課金設定
 
 3. **AssemblyAI アカウント（推奨）**
    - APIキー取得
@@ -19,9 +29,24 @@
    - リポジトリ作成
    - Actions有効化
 
-## ステップ1: Google APIセットアップ
+## ステップ1: Google AI (Gemini) セットアップ ⭐ NEW
 
-### 1.1 サービスアカウント作成
+### 1.1 APIキー取得
+
+1. [Google AI Studio](https://aistudio.google.com/)にアクセス
+2. 「Get API Key」をクリック
+3. APIキーをコピー（例: `AIzaSy...`）
+
+### 1.2 利用制限
+
+- **無料枠**: 15 requests/分、1500 requests/日
+- **有料プラン**: 利用量に応じた従量課金
+
+詳細: [Gemini API Pricing](https://ai.google.dev/pricing)
+
+## ステップ2: Google Sheets/Drive API セットアップ
+
+### 2.1 サービスアカウント作成
 
 1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
 2. 新規プロジェクトを作成（または既存プロジェクトを選択）
@@ -32,14 +57,14 @@
 5. 「キーを作成」→「JSON」
    - ダウンロードしたJSONファイルを安全に保管
 
-### 1.2 API有効化
+### 2.2 API有効化
 
 1. 「APIとサービス」→「ライブラリ」
 2. 以下を有効化:
    - Google Sheets API
    - Google Drive API
 
-### 1.3 権限付与
+### 2.3 権限付与
 
 #### Google Sheets
 1. 対象スプレッドシートを開く
@@ -53,20 +78,17 @@
 3. サービスアカウントのメールアドレスを追加
 4. 権限: 「閲覧者」（読み取り専用）
 
-## ステップ2: GitHubリポジトリセットアップ
+## ステップ3: GitHubリポジトリセットアップ
 
-### 2.1 リポジトリ作成
+### 3.1 リポジトリ作成
 
 ```bash
-# ローカルでリポジトリを確認
+# ローカルでリモート設定
 cd /home/user/webapp
-git remote -v
-
-# まだリモートが設定されていない場合
 git remote add origin https://github.com/YOUR_USERNAME/wannav-lesson-analyzer.git
 ```
 
-### 2.2 Secretsの設定
+### 3.2 Secretsの設定
 
 GitHub リポジトリの Settings > Secrets and variables > Actions
 
@@ -93,9 +115,10 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
 
 **重要**: 改行をそのままコピーしてください（`\n`ではなく実際の改行）
 
-#### OPENAI_API_KEY
+#### GOOGLE_AI_API_KEY ⭐ NEW
+Google AI Studioで取得したAPIキー:
 ```
-sk-proj-...
+AIzaSy...
 ```
 
 #### ASSEMBLYAI_API_KEY（オプション）
@@ -103,119 +126,172 @@ sk-proj-...
 your-assemblyai-api-key
 ```
 
-### 2.3 Actionsの有効化
+### 3.3 Actionsの有効化
 
 1. GitHub リポジトリの「Actions」タブ
 2. 「I understand my workflows, go ahead and enable them」をクリック
 
-## ステップ3: GitHub Actionsでテスト実行
+## ステップ4: 分析ジョブのテスト実行
 
-### 3.1 手動実行
+### 4.1 GitHub Actionsで手動実行
 
 1. 「Actions」タブ
 2. 「Daily Lesson Analysis」を選択
 3. 「Run workflow」→「Run workflow」
 
-### 3.2 ログ確認
+### 4.2 ログ確認
 
 - 実行中のワークフローをクリック
 - 「analyze」ジョブを展開
 - 各ステップのログを確認
 
-### 3.3 成功確認
+### 4.3 成功確認
 
 1. Google Sheetsを開く
 2. `daily_lessons` シートが作成されているか確認
 3. データが書き込まれているか確認
 
-## ステップ4: Renderデプロイ（オプション）
+## ステップ5: Webダッシュボードのデプロイ ⭐ NEW
 
-Renderは補助的な環境です。主要な処理はGitHub Actionsで実行されます。
+### オプション1: ローカル開発
 
-### 4.1 Renderアカウント作成
+```bash
+cd /home/user/webapp
 
-1. [Render](https://render.com)でサインアップ
-2. GitHubアカウントと連携
+# 環境変数設定（.env作成）
+cp .env.example .env
+# .envを編集してAPIキーを設定
 
-### 4.2 New Workerの作成
+# 依存関係インストール
+npm install
 
-1. Dashboard > New > Worker
-2. Connect Repository: `wannav-lesson-analyzer`
-3. Name: `wannav-lesson-analyzer`
-4. Environment: `Node`
-5. Build Command: `npm install`
-6. Start Command: `echo "Worker ready"`
+# ダッシュボード起動
+npm run dashboard
 
-### 4.3 Environment変数設定
+# ブラウザで開く
+# http://localhost:3000
+```
 
-以下の環境変数を追加（GitHub Actionsと同じ値）:
+### オプション2: PM2で本番デプロイ
 
-- `GOOGLE_SHEETS_ID`
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-- `GOOGLE_PRIVATE_KEY`
-- `OPENAI_API_KEY`
-- `ASSEMBLYAI_API_KEY`
-- `TZ` = `Asia/Tokyo`
+```bash
+# ポート3000クリーンアップ
+fuser -k 3000/tcp 2>/dev/null || true
 
-### 4.4 Deploy
+# PM2で起動
+pm2 start ecosystem.config.cjs
 
-「Create Worker」をクリック
+# 起動確認
+pm2 list
 
-## ステップ5: スケジュール確認
+# ログ確認
+pm2 logs wannav-dashboard --nostream
+
+# PM2を自動起動設定（システム起動時）
+pm2 startup
+pm2 save
+
+# 停止
+pm2 stop wannav-dashboard
+
+# 削除
+pm2 delete wannav-dashboard
+```
+
+### オプション3: Renderにデプロイ
+
+1. [Render](https://render.com)でアカウント作成
+2. New > Web Service
+3. Connect Repository: `wannav-lesson-analyzer`
+4. 設定:
+   - Name: `wannav-dashboard`
+   - Build Command: `npm install`
+   - Start Command: `npm run dashboard`
+   - Environment Variables:
+     - `GOOGLE_SHEETS_ID`
+     - `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+     - `GOOGLE_PRIVATE_KEY`
+     - `GOOGLE_AI_API_KEY`
+     - `DASHBOARD_PORT` = `3000`
+     - `TZ` = `Asia/Tokyo`
+
+5. Create Web Service
+
+## ステップ6: スケジュール確認
 
 ### 日次ジョブ
 - 実行時刻: 毎日 9:00 JST（00:00 UTC）
 - 対象: 前日 00:00:00〜23:59:59 JST
+- 処理: 動画ファイルの文字起こし・分析
 
 ### 週次ジョブ
 - 実行時刻: 毎週月曜 9:00 JST（00:00 UTC）
 - 対象: 前週月〜日
+- 処理: 週次集計・スコア計算
+
+### Webダッシュボード
+- 常時起動（PM2またはRender）
+- リアルタイムでSheets データを取得・表示
+
+## Webダッシュボード機能
+
+### 📈 週次評価
+- **スコア推移グラフ**: 講師ごとの週次スコア（0-100）の折れ線グラフ
+- **レッスン数グラフ**: 講師ごとのレッスン実施数の棒グラフ
+- **サマリーテーブル**: 週、講師、レッスン数、スコア、主要所見
+
+### 🎥 レッスン詳細
+- **ドロップダウン選択**: 日付・講師・ファイル名で検索
+- **KPIカード**: 発話比率、最長モノローグ、生徒ターン数
+- **感情シグナル**: 困惑/ストレス/ポジティブのTOP3区間
+- **改善アドバイス**: AIによる具体的なフィードバック
+- **推奨アクション**: 3つの実行可能なアクション
+- **詳細統計**: 全KPIの数値表示
 
 ## トラブルシューティング
 
-### 1. "Missing required environment variables" エラー
+### 1. "GOOGLE_AI_API_KEY not configured" エラー
 
-**原因**: GitHub Secretsが正しく設定されていない
-
-**解決策**:
-1. Settings > Secrets and variables > Actions で確認
-2. 各Secretが正しく設定されているか確認
-3. `GOOGLE_PRIVATE_KEY` の改行が正しいか確認
-
-### 2. "Permission denied" エラー
-
-**原因**: サービスアカウントに権限がない
+**原因**: Gemini APIキーが設定されていない
 
 **解決策**:
-1. Google Sheetsの共有設定を確認
-2. Google Driveフォルダの共有設定を確認
-3. サービスアカウントのメールアドレスが正しいか確認
+1. GitHub Secrets に `GOOGLE_AI_API_KEY` を追加
+2. ローカルの場合は `.env` ファイルに追加
+3. `npm run validate` で確認
 
-### 3. "Failed to extract audio" エラー
+### 2. Gemini API rate limit エラー
 
-**原因**: ffmpegのインストール失敗
-
-**解決策**:
-- GitHub Actionsの場合: `.github/workflows/daily.yml` で `apt-get install ffmpeg` を確認
-- ローカルの場合: `ffmpeg -version` で確認
-
-### 4. "No utterances detected" エラー
-
-**原因**: 音声品質が低い、または音声が含まれていない
+**原因**: 無料枠の制限（15 req/分、1500 req/日）
 
 **解決策**:
-1. 録画ファイルに音声が含まれているか確認
-2. AssemblyAI APIキーを設定して精度を向上
-3. 音声正規化のパラメータを調整（`audioService.js`）
+1. エラーリトライロジックが自動的に再試行（最大3回）
+2. 有料プランへのアップグレードを検討
+3. レッスン処理を分散させる
 
-### 5. OpenAI API rate limit エラー
+### 3. ダッシュボードにデータが表示されない
 
-**原因**: OpenAI APIのレート制限
+**原因**: Sheetsにデータがない、または権限不足
 
 **解決策**:
-1. OpenAIダッシュボードで使用状況を確認
-2. 課金プランをアップグレード
-3. リトライロジックを実装（今後の改善）
+1. Google Sheets に `daily_lessons` と `weekly_tutors` シートが存在するか確認
+2. サービスアカウントに閲覧権限があるか確認
+3. ブラウザのコンソールでAPIエラーを確認（F12）
+
+### 4. "Port 3000 already in use" エラー
+
+**原因**: ポート3000が既に使用されている
+
+**解決策**:
+```bash
+# プロセスを確認
+lsof -i :3000
+
+# ポートを強制的にクリーンアップ
+fuser -k 3000/tcp
+
+# または別のポートを使用
+DASHBOARD_PORT=3001 npm run dashboard
+```
 
 ## セキュリティ上の注意
 
@@ -223,44 +299,55 @@ Renderは補助的な環境です。主要な処理はGitHub Actionsで実行さ
    - `.env` ファイルは `.gitignore` に含まれている
    - GitHub Secretsは暗号化されている
 
-2. **サービスアカウントの権限を最小限に**
+2. **APIキーの管理**
+   - Gemini APIキー: Google AI Studio で管理
+   - 定期的にローテーション推奨
+
+3. **サービスアカウントの権限を最小限に**
    - Google Sheets: 編集者
    - Google Drive: 閲覧者のみ
 
-3. **Private Keyの管理**
-   - ダウンロードしたJSONファイルを安全に保管
-   - 不要になったら削除
+4. **ダッシュボードのセキュリティ**
+   - 本番環境では認証機能の追加を推奨（将来実装）
+   - HTTPSの使用を推奨
 
-4. **APIキーのローテーション**
-   - 定期的にAPIキーを更新
-   - 古いキーは無効化
+## コスト見積もり（v2.0）
 
-## コスト見積もり
+### Gemini API（v2.0） ⭐ 大幅コスト削減
+- Gemini 1.5 Pro（文字起こし）: $0.00125/秒
+- Gemini 1.5 Flash（分析）: $0.075/1M入力トークン
+- **60分レッスン1本**: 約$0.30〜$0.50
 
-### OpenAI API
-- Whisper: $0.006 / 分
-- GPT-4o-mini: $0.15 / 1Mトークン
-- 60分レッスン1本あたり: 約$0.50〜$1.00
+### AssemblyAI API（オプション）
+- Diarization: $0.015/分
+- **60分レッスン1本**: 約$0.90
 
-### AssemblyAI API
-- Diarization: $0.015 / 分（推奨）
-- 60分レッスン1本あたり: 約$0.90
+### 合計（v2.0）
+- **Gemini のみ**: 約$0.30〜$0.50/レッスン（**66%削減** 🎉）
+- **Gemini + AssemblyAI**: 約$1.20〜$1.40/レッスン
+
+### 月間コスト（例: 20レッスン/日 × 30日 = 600レッスン/月）
+- **Gemini のみ**: $180〜$300/月
+- **Gemini + AssemblyAI**: $720〜$840/月
 
 ### GitHub Actions
 - 無料枠: 2,000分/月（Freeプラン）
 - レッスン1本処理時間: 約5〜10分
 - 無料枠内で月200〜400レッスン処理可能
 
-### Render
-- Starter: $7/月（オプション）
+### Render（Webダッシュボード）
+- Starter: $7/月
+- Standard: $25/月（推奨）
 
 ## 次のステップ
 
-1. ✅ 環境変数を設定
-2. ✅ GitHub Actionsで手動実行
-3. ✅ 結果をGoogle Sheetsで確認
-4. ✅ スケジュール実行を待つ（または手動実行を続ける）
-5. 📊 データ分析とダッシュボード構築（将来）
+1. ✅ Google AI (Gemini) APIキーを取得
+2. ✅ GitHub Secretsを設定
+3. ✅ GitHub Actionsで手動実行
+4. ✅ 結果をGoogle Sheetsで確認
+5. ✅ Webダッシュボードをデプロイ
+6. ✅ ダッシュボードでデータ可視化を確認
+7. 📊 スケジュール実行を待つ（または手動実行を続ける）
 
 ## サポート
 
@@ -268,3 +355,18 @@ Renderは補助的な環境です。主要な処理はGitHub Actionsで実行さ
 1. GitHub Actionsのログを確認
 2. `logs/error.log` を確認
 3. このドキュメントのトラブルシューティングセクションを参照
+4. ブラウザのコンソールログを確認（ダッシュボード関連）
+
+## バージョン履歴
+
+- **v2.0.0** (2026-01-08)
+  - Gemini AI統合（66%コスト削減）
+  - エラーリトライロジック実装
+  - Webダッシュボード追加
+  - 週次評価グラフ・チャート実装
+  - レッスンごと詳細表示実装
+
+- **v1.0.0** (2026-01-08)
+  - 初版リリース
+  - OpenAI Whisper + GPT-4
+  - Google Sheets出力
