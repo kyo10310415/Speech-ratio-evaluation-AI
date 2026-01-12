@@ -34,6 +34,9 @@ export const config = {
   // Dashboard
   dashboardPort: parseInt(process.env.DASHBOARD_PORT || '3000'),
   dashboardHost: process.env.DASHBOARD_HOST || '0.0.0.0',
+  
+  // Parallel processing
+  maxConcurrency: parseInt(process.env.MAX_CONCURRENCY || '5'),
 };
 
 // Validation

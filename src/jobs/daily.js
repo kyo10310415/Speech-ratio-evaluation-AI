@@ -7,6 +7,7 @@ import { audioService } from '../services/audioService.js';
 import { transcriptionService } from '../services/transcriptionService.js';
 import { emotionAnalyzer } from '../analyzers/emotionAnalyzer.js';
 import { processTutorFolder } from '../services/lessonProcessor.js';
+import { processInParallel, calculateOptimalConcurrency } from '../utils/parallelProcessor.js';
 import {
   DAILY_LESSONS_HEADERS,
   DAILY_TUTORS_HEADERS,
@@ -57,29 +58,46 @@ export async function runDailyJob() {
     await sheetsService.getOrCreateSheet('daily_lessons');
     await sheetsService.writeHeaders('daily_lessons', DAILY_LESSONS_HEADERS);
 
-    // Process each tutor's folder
-    const allLessonRows = [];
+    // Calculate optimal concurrency
+    const concurrency = calculateOptimalConcurrency(tutorRecords.length, config.maxConcurrency);
+    logger.info(`Using concurrency: ${concurrency}`);
 
-    for (const record of tutorRecords) {
-      const { tutorName, folderUrl } = record;
+    // Process each tutor's folder in parallel
+    const { results, errors } = await processInParallel(
+      tutorRecords,
+      async (record) => {
+        const { tutorName, folderUrl } = record;
 
-      if (!tutorName || !folderUrl) {
-        logger.warn('Skipping invalid record:', record);
-        continue;
-      }
+        if (!tutorName || !folderUrl) {
+          logger.warn('Skipping invalid record:', record);
+          return [];
+        }
 
-      logger.info(`Processing tutor: ${tutorName}`);
+        logger.info(`Processing tutor: ${tutorName}`);
 
-      const rows = await processTutorFolder({
-        tutorName,
-        folderUrl,
-        dateJst: dateStr,
-        startDate,
-        endDate,
-        processedFileIds,
+        const rows = await processTutorFolder({
+          tutorName,
+          folderUrl,
+          dateJst: dateStr,
+          startDate,
+          endDate,
+          processedFileIds,
+        });
+
+        return rows;
+      },
+      concurrency
+    );
+
+    // Flatten results
+    const allLessonRows = results.flat();
+    
+    // Log errors if any
+    if (errors.length > 0) {
+      logger.error(`Failed to process ${errors.length} tutors:`);
+      errors.forEach(({ item, error }) => {
+        logger.error(`  - ${item.tutorName}: ${error.message}`);
       });
-
-      allLessonRows.push(...rows);
     }
 
     // Write lesson rows to daily_lessons
