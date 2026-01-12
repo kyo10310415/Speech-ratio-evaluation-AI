@@ -1,5 +1,6 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { mkdir } from 'fs/promises';
+import { unlink } from 'fs/promises';
 import { join } from 'path';
 import { config } from '../config/env.js';
 import { logger } from '../utils/logger.js';
@@ -126,12 +127,24 @@ class AudioService {
    * @returns {Object} { audioPath, duration }
    */
   async processVideo(videoPath, fileId) {
+    let rawAudioPath = null;
+    
     try {
       // Extract audio
-      const rawAudioPath = await this.extractAudio(videoPath, fileId);
+      rawAudioPath = await this.extractAudio(videoPath, fileId);
+      
+      // Delete video file immediately after extraction to free memory
+      logger.info(`Deleting video file to free memory: ${videoPath}`);
+      await unlink(videoPath).catch(err => logger.warn(`Failed to delete video file: ${err.message}`));
 
       // Normalize audio
       const normalizedAudioPath = await this.normalizeAudio(rawAudioPath);
+
+      // Delete raw audio file if normalization was successful and created a new file
+      if (normalizedAudioPath !== rawAudioPath) {
+        logger.info(`Deleting raw audio file to free memory: ${rawAudioPath}`);
+        await unlink(rawAudioPath).catch(err => logger.warn(`Failed to delete raw audio: ${err.message}`));
+      }
 
       // Get duration
       const duration = await this.getAudioDuration(normalizedAudioPath);
@@ -144,6 +157,13 @@ class AudioService {
       };
     } catch (error) {
       logger.error(`Failed to process video ${fileId}`, error);
+      
+      // Cleanup on error
+      if (rawAudioPath) {
+        await unlink(rawAudioPath).catch(() => {});
+      }
+      await unlink(videoPath).catch(() => {});
+      
       throw error;
     }
   }
