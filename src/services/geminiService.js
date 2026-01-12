@@ -39,8 +39,8 @@ class GeminiService {
 
           logger.info(`Audio uploaded: ${uploadResponse.file.uri}`);
 
-          // Use Gemini Pro for transcription
-          const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+          // Use Gemini Pro for transcription (use -latest suffix for v1beta API)
+          const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
           const prompt = `この音声ファイルを文字起こししてください。
 
