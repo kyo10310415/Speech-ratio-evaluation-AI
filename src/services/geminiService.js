@@ -21,11 +21,13 @@ class GeminiService {
   }
 
   /**
-   * Transcribe audio file using Gemini
+   * Transcribe audio file using Gemini (single file, no chunking)
    * @param {string} audioPath 
    * @returns {Object} { segments: [...] }
    */
-  async transcribeAudio(audioPath) {
+  async transcribeAudioSingleFile(audioPath) {
+    let uploadedFileName = null;
+    
     return pRetry(
       async () => {
         try {
@@ -37,6 +39,7 @@ class GeminiService {
             displayName: 'lesson_audio',
           });
 
+          uploadedFileName = uploadResponse.file.name;
           logger.info(`Audio uploaded: ${uploadResponse.file.uri}`);
 
           // Use Gemini 2.5 Flash for transcription (stable model)
@@ -89,13 +92,29 @@ class GeminiService {
 
           logger.info(`Gemini response length: ${text.length} characters`);
 
-          // Parse JSON response
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          // Parse JSON response - extract only valid JSON
+          const jsonMatch = text.match(/\{[\s\S]*"segments"[\s\S]*\]/);
           if (!jsonMatch) {
-            throw new Error('Failed to parse transcription response');
+            throw new Error('Failed to find segments in transcription response');
           }
 
-          const data = JSON.parse(jsonMatch[0]);
+          // Try to extract valid JSON even if there's trailing text
+          let jsonText = jsonMatch[0];
+          
+          // Ensure JSON is properly closed
+          if (!jsonText.endsWith('}')) {
+            // Count opening and closing braces
+            const openBraces = (jsonText.match(/\{/g) || []).length;
+            const closeBraces = (jsonText.match(/\}/g) || []).length;
+            const missingBraces = openBraces - closeBraces;
+            
+            if (missingBraces > 0) {
+              jsonText += '}'.repeat(missingBraces);
+              logger.warn(`Added ${missingBraces} closing braces to fix JSON`);
+            }
+          }
+
+          const data = JSON.parse(jsonText);
 
           // Convert to milliseconds
           const segments = data.segments.map(seg => ({
@@ -107,12 +126,28 @@ class GeminiService {
 
           logger.info(`Transcription complete: ${segments.length} segments`);
 
-          // Clean up uploaded file
-          await this.fileManager.deleteFile(uploadResponse.file.name);
+          // Clean up uploaded file from Gemini
+          if (uploadedFileName) {
+            try {
+              await this.fileManager.deleteFile(uploadedFileName);
+            } catch (err) {
+              logger.warn(`Failed to delete uploaded file from Gemini: ${err.message}`);
+            }
+          }
 
           return { segments };
         } catch (error) {
           logger.error('Gemini transcription failed', error);
+          
+          // Clean up uploaded file on error
+          if (uploadedFileName) {
+            try {
+              await this.fileManager.deleteFile(uploadedFileName);
+            } catch (err) {
+              // Ignore cleanup errors
+            }
+          }
+          
           throw error;
         }
       },
@@ -264,13 +299,29 @@ class GeminiService {
 
           logger.info(`Gemini response length: ${text.length} characters`);
 
-          // Parse JSON response
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          // Parse JSON response - extract only valid JSON
+          const jsonMatch = text.match(/\{[\s\S]*"segments"[\s\S]*\]/);
           if (!jsonMatch) {
-            throw new Error('Failed to parse transcription response');
+            throw new Error('Failed to find segments in transcription response');
           }
 
-          const data = JSON.parse(jsonMatch[0]);
+          // Try to extract valid JSON even if there's trailing text
+          let jsonText = jsonMatch[0];
+          
+          // Ensure JSON is properly closed
+          if (!jsonText.endsWith('}')) {
+            // Count opening and closing braces
+            const openBraces = (jsonText.match(/\{/g) || []).length;
+            const closeBraces = (jsonText.match(/\}/g) || []).length;
+            const missingBraces = openBraces - closeBraces;
+            
+            if (missingBraces > 0) {
+              jsonText += '}'.repeat(missingBraces);
+              logger.warn(`Added ${missingBraces} closing braces to fix JSON`);
+            }
+          }
+
+          const data = JSON.parse(jsonText);
 
           // Convert to milliseconds
           const segments = data.segments.map(seg => ({
