@@ -5,6 +5,7 @@ import { serve } from '@hono/node-server';
 import { config, validateConfig } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { sheetsService } from '../services/sheetsService.js';
+import { jobScheduler } from '../scheduler/jobScheduler.js';
 
 const app = new Hono();
 
@@ -259,6 +260,9 @@ async function startServer() {
     validateConfig();
     logger.info('Starting dashboard server...');
 
+    // Start job scheduler
+    jobScheduler.start();
+
     serve(
       {
         fetch: app.fetch,
@@ -269,6 +273,19 @@ async function startServer() {
         logger.info(`Dashboard server running at http://${info.address}:${info.port}`);
       }
     );
+
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM signal received: closing HTTP server');
+      jobScheduler.stop();
+      process.exit(0);
+    });
+
+    process.on('SIGINT', () => {
+      logger.info('SIGINT signal received: closing HTTP server');
+      jobScheduler.stop();
+      process.exit(0);
+    });
   } catch (error) {
     logger.error('Failed to start dashboard server', error);
     process.exit(1);
