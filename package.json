@@ -14,6 +14,7 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "test:drive": "node src/test-drive-folders.js",
     "debug:dates": "node src/debug-video-dates.js",
+    "debug:transcription": "node src/debug-transcription.js",
     "clear:errors": "node src/clear-error-rows.js",
     "test:auth": "node src/test-auth-detailed.js",
     "dev": "node --watch src/index.js",

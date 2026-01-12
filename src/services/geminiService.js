@@ -42,12 +42,14 @@ class GeminiService {
           // Use Gemini 2.5 Flash for transcription (stable model)
           const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-          const prompt = `この音声ファイルを文字起こししてください。
+          const prompt = `この音声ファイルは約${Math.round(readFileSync(audioPath).length / (1024 * 1024 * 10))}分のオンラインレッスンの録音です。
+音声ファイル全体を最初から最後まで完全に文字起こししてください。
 
-要件:
-1. 発話ごとにタイムスタンプ（秒単位）を含めてください
-2. 話者が切り替わる箇所を認識してください
-3. 以下のJSON形式で出力してください:
+重要な要件:
+1. **音声ファイルの最初から最後まで全て**を文字起こししてください（途中で終わらないこと）
+2. 発話ごとにタイムスタンプ（秒単位）を含めてください
+3. 話者が切り替わる箇所を認識してください（話者Aと話者Bの2人の会話）
+4. 以下のJSON形式で出力してください:
 
 {
   "segments": [
@@ -56,11 +58,21 @@ class GeminiService {
       "end_sec": 5.2,
       "text": "発話内容",
       "speaker": "A"
+    },
+    {
+      "start_sec": 5.2,
+      "end_sec": 12.8,
+      "text": "次の発話内容",
+      "speaker": "B"
     }
   ]
 }
 
-注意: 話者Aと話者Bの2人の会話です。`;
+注意事項:
+- 音声が長い場合でも、最後まで全て文字起こししてください
+- 発話がない区間は省略してください
+- 話者Aと話者Bのラベルを一貫して使用してください
+- 日本語の発話を正確に文字起こししてください`;
 
           const result = await model.generateContent([
             {
@@ -74,6 +86,8 @@ class GeminiService {
 
           const response = result.response;
           const text = response.text();
+
+          logger.info(`Gemini response length: ${text.length} characters`);
 
           // Parse JSON response
           const jsonMatch = text.match(/\{[\s\S]*\}/);
