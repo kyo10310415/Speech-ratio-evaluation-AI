@@ -1,6 +1,7 @@
 import { config } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { geminiService } from './geminiService.js';
+import { audioService } from './audioService.js';
 import axios from 'axios';
 import { createReadStream } from 'fs';
 import pRetry from 'p-retry';
@@ -129,14 +130,32 @@ class TranscriptionService {
 
   /**
    * Transcribe and diarize using Gemini (includes both transcription and basic speaker detection)
+   * Automatically splits long audio files into chunks
    * @param {string} audioPath 
    * @returns {Object} { utterances: [...] }
    */
   async transcribeAndDiarizeWithGemini(audioPath) {
+    let chunks = [];
+    
     try {
       logger.info('Using Gemini for transcription and speaker detection');
 
-      const { segments } = await geminiService.transcribeAudio(audioPath);
+      // Split audio into chunks (12-minute chunks)
+      chunks = await audioService.splitAudioIntoChunks(audioPath, 12);
+      
+      logger.info(`Audio split into ${chunks.length} chunks`);
+
+      let segments;
+      
+      if (chunks.length === 1) {
+        // Single chunk - use original method
+        const result = await geminiService.transcribeAudioSingleFile(audioPath);
+        segments = result.segments;
+      } else {
+        // Multiple chunks - use chunked transcription
+        const result = await geminiService.transcribeAudioWithChunks(audioPath, chunks);
+        segments = result.segments;
+      }
 
       // Map Gemini speakers to roles
       // Assumption: Speaker A is Tutor
@@ -147,9 +166,22 @@ class TranscriptionService {
         text: seg.text,
       }));
 
+      // Cleanup chunk files (except original)
+      if (chunks.length > 1) {
+        const chunkFilesToDelete = chunks.filter(c => c.path !== audioPath);
+        await audioService.cleanupChunks(chunkFilesToDelete);
+      }
+
       return { utterances };
     } catch (error) {
       logger.error('Gemini transcription and diarization failed', error);
+      
+      // Cleanup on error
+      if (chunks.length > 1) {
+        const chunkFilesToDelete = chunks.filter(c => c.path !== audioPath);
+        await audioService.cleanupChunks(chunkFilesToDelete).catch(() => {});
+      }
+      
       throw error;
     }
   }

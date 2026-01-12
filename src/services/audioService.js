@@ -121,6 +121,92 @@ class AudioService {
   }
 
   /**
+   * Split audio into chunks for processing long files
+   * @param {string} audioPath 
+   * @param {number} chunkDurationMinutes - Duration of each chunk in minutes (default: 12)
+   * @returns {Array<{path: string, startSec: number, endSec: number}>} Array of chunk info
+   */
+  async splitAudioIntoChunks(audioPath, chunkDurationMinutes = 12) {
+    try {
+      const duration = await this.getAudioDuration(audioPath);
+      const chunkDurationSec = chunkDurationMinutes * 60;
+      
+      // If audio is shorter than chunk size, no splitting needed
+      if (duration <= chunkDurationSec) {
+        logger.info(`Audio duration ${duration}s is within single chunk size, no splitting needed`);
+        return [{
+          path: audioPath,
+          startSec: 0,
+          endSec: duration,
+        }];
+      }
+
+      logger.info(`Splitting audio (${duration}s) into ${chunkDurationMinutes}-minute chunks`);
+      
+      const chunks = [];
+      const baseName = audioPath.replace('.wav', '');
+      let startSec = 0;
+      let chunkIndex = 0;
+
+      while (startSec < duration) {
+        const endSec = Math.min(startSec + chunkDurationSec, duration);
+        const chunkPath = `${baseName}_chunk${chunkIndex}.wav`;
+        
+        // Extract chunk using ffmpeg
+        await new Promise((resolve, reject) => {
+          ffmpeg(audioPath)
+            .setStartTime(startSec)
+            .setDuration(endSec - startSec)
+            .output(chunkPath)
+            .audioCodec('pcm_s16le')
+            .audioChannels(1)
+            .audioFrequency(16000)
+            .on('end', () => {
+              logger.info(`Created chunk ${chunkIndex}: ${chunkPath} (${startSec}s - ${endSec}s)`);
+              resolve();
+            })
+            .on('error', (err) => {
+              logger.error(`Failed to create chunk ${chunkIndex}`, err);
+              reject(err);
+            })
+            .run();
+        });
+
+        chunks.push({
+          path: chunkPath,
+          startSec,
+          endSec,
+        });
+
+        startSec = endSec;
+        chunkIndex++;
+      }
+
+      logger.info(`Audio split into ${chunks.length} chunks`);
+      return chunks;
+
+    } catch (error) {
+      logger.error('Failed to split audio into chunks', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clean up chunk files
+   * @param {Array} chunks 
+   */
+  async cleanupChunks(chunks) {
+    for (const chunk of chunks) {
+      try {
+        await unlink(chunk.path);
+        logger.debug(`Deleted chunk: ${chunk.path}`);
+      } catch (err) {
+        logger.warn(`Failed to delete chunk ${chunk.path}:`, err.message);
+      }
+    }
+  }
+
+  /**
    * Process video: extract and normalize audio
    * @param {string} videoPath 
    * @param {string} fileId 

@@ -128,6 +128,181 @@ class GeminiService {
   }
 
   /**
+   * Transcribe audio with chunking for long files
+   * @param {string} audioPath 
+   * @param {Array} chunks - Array of {path, startSec, endSec}
+   * @returns {Object} { segments: [...] }
+   */
+  async transcribeAudioWithChunks(audioPath, chunks) {
+    try {
+      logger.info(`Transcribing ${chunks.length} audio chunks`);
+      
+      let allSegments = [];
+      let previousLastSpeaker = null; // Track speaker across chunks
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        logger.info(`Processing chunk ${i + 1}/${chunks.length}: ${chunk.startSec}s - ${chunk.endSec}s`);
+
+        // Transcribe chunk
+        const { segments } = await this.transcribeAudio(chunk.path);
+        
+        logger.info(`Chunk ${i + 1} transcription: ${segments.length} segments`);
+
+        // Adjust timestamps to absolute time
+        const adjustedSegments = segments.map(seg => ({
+          start_ms: seg.start_ms + (chunk.startSec * 1000),
+          end_ms: seg.end_ms + (chunk.startSec * 1000),
+          text: seg.text,
+          speaker: seg.speaker,
+        }));
+
+        // Handle speaker consistency across chunks
+        if (previousLastSpeaker && adjustedSegments.length > 0) {
+          const firstSpeaker = adjustedSegments[0].speaker;
+          
+          // If first speaker in new chunk doesn't match last speaker in previous chunk,
+          // and there's a small gap (< 5 seconds), it might be the same person continuing
+          if (allSegments.length > 0) {
+            const lastSegment = allSegments[allSegments.length - 1];
+            const gap = adjustedSegments[0].start_ms - lastSegment.end_ms;
+            
+            if (gap < 5000 && firstSpeaker !== previousLastSpeaker) {
+              logger.info(`Speaker boundary at chunk ${i + 1}: gap=${gap}ms, flipping speakers`);
+              // Flip all speakers in this chunk
+              adjustedSegments.forEach(seg => {
+                seg.speaker = seg.speaker === 'A' ? 'B' : 'A';
+              });
+            }
+          }
+        }
+
+        allSegments = allSegments.concat(adjustedSegments);
+        
+        // Update previous last speaker
+        if (adjustedSegments.length > 0) {
+          previousLastSpeaker = adjustedSegments[adjustedSegments.length - 1].speaker;
+        }
+      }
+
+      logger.info(`Total segments after chunking: ${allSegments.length}`);
+      
+      return { segments: allSegments };
+
+    } catch (error) {
+      logger.error('Chunked transcription failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transcribe audio file using Gemini (old single-file method)
+   * @param {string} audioPath 
+   * @returns {Object} { segments: [...] }
+   */
+  async transcribeAudioSingleFile(audioPath) {
+    return pRetry(
+      async () => {
+        try {
+          logger.info(`Transcribing audio with Gemini: ${audioPath}`);
+
+          // Upload audio file
+          const uploadResponse = await this.fileManager.uploadFile(audioPath, {
+            mimeType: 'audio/wav',
+            displayName: 'lesson_audio',
+          });
+
+          logger.info(`Audio uploaded: ${uploadResponse.file.uri}`);
+
+          // Use Gemini 2.5 Flash for transcription (stable model)
+          const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+          const prompt = `この音声ファイルは約${Math.round(readFileSync(audioPath).length / (1024 * 1024 * 10))}分のオンラインレッスンの録音です。
+音声ファイル全体を最初から最後まで完全に文字起こししてください。
+
+重要な要件:
+1. **音声ファイルの最初から最後まで全て**を文字起こししてください（途中で終わらないこと）
+2. 発話ごとにタイムスタンプ（秒単位）を含めてください
+3. 話者が切り替わる箇所を認識してください（話者Aと話者Bの2人の会話）
+4. 以下のJSON形式で出力してください:
+
+{
+  "segments": [
+    {
+      "start_sec": 0.0,
+      "end_sec": 5.2,
+      "text": "発話内容",
+      "speaker": "A"
+    },
+    {
+      "start_sec": 5.2,
+      "end_sec": 12.8,
+      "text": "次の発話内容",
+      "speaker": "B"
+    }
+  ]
+}
+
+注意事項:
+- 音声が長い場合でも、最後まで全て文字起こししてください
+- 発話がない区間は省略してください
+- 話者Aと話者Bのラベルを一貫して使用してください
+- 日本語の発話を正確に文字起こししてください`;
+
+          const result = await model.generateContent([
+            {
+              fileData: {
+                mimeType: uploadResponse.file.mimeType,
+                fileUri: uploadResponse.file.uri,
+              },
+            },
+            { text: prompt },
+          ]);
+
+          const response = result.response;
+          const text = response.text();
+
+          logger.info(`Gemini response length: ${text.length} characters`);
+
+          // Parse JSON response
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error('Failed to parse transcription response');
+          }
+
+          const data = JSON.parse(jsonMatch[0]);
+
+          // Convert to milliseconds
+          const segments = data.segments.map(seg => ({
+            start_ms: Math.round(seg.start_sec * 1000),
+            end_ms: Math.round(seg.end_sec * 1000),
+            text: seg.text.trim(),
+            speaker: seg.speaker,
+          }));
+
+          logger.info(`Transcription complete: ${segments.length} segments`);
+
+          // Clean up uploaded file
+          await this.fileManager.deleteFile(uploadResponse.file.name);
+
+          return { segments };
+        } catch (error) {
+          logger.error('Gemini transcription failed', error);
+          throw error;
+        }
+      },
+      {
+        retries: 3,
+        onFailedAttempt: (error) => {
+          logger.warn(
+            `Transcription attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
+          );
+        },
+      }
+    );
+  }
+
+  /**
    * Analyze emotional signals using Gemini
    * @param {Array} utterances 
    * @returns {Object} Emotion analysis result
