@@ -180,7 +180,7 @@ class GeminiService {
         logger.info(`Processing chunk ${i + 1}/${chunks.length}: ${chunk.startSec}s - ${chunk.endSec}s`);
 
         // Transcribe chunk
-        const { segments } = await this.transcribeAudio(chunk.path);
+        const { segments } = await this.transcribeAudioSingleFile(chunk.path);
         
         logger.info(`Chunk ${i + 1} transcription: ${segments.length} segments`);
 
