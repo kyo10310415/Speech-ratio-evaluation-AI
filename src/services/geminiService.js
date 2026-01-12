@@ -39,8 +39,8 @@ class GeminiService {
 
           logger.info(`Audio uploaded: ${uploadResponse.file.uri}`);
 
-          // Use Gemini Pro for transcription (use -latest suffix for v1beta API)
-          const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
+          // Use Gemini 2.5 Flash for transcription (stable model)
+          const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
           const prompt = `この音声ファイルを文字起こししてください。
 
@@ -124,7 +124,7 @@ class GeminiService {
         try {
           logger.info('Analyzing emotions with Gemini');
 
-          const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
           // Prepare transcript
           const transcript = utterances
@@ -227,7 +227,7 @@ ${transcript}
         try {
           logger.info('Generating report with Gemini');
 
-          const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
           const prompt = `以下はオンラインレッスンの分析結果です:
 
