@@ -1,9 +1,9 @@
 import { google } from 'googleapis';
 import { config } from '../config/env.js';
 import { logger } from '../utils/logger.js';
-import { createWriteStream } from 'fs';
+import { createWriteStream, existsSync } from 'fs';
 import { mkdir } from 'fs/promises';
-import { join } from 'path';
+import { join, dirname } from 'path';
 
 class DriveService {
   constructor() {
@@ -242,10 +242,22 @@ class DriveService {
   async downloadFile(fileId, fileName) {
     try {
       // Ensure downloads directory exists
+      logger.info(`Creating directory: ${config.downloadsDir}`);
       await mkdir(config.downloadsDir, { recursive: true });
+      
+      // Verify directory was created
+      if (!existsSync(config.downloadsDir)) {
+        throw new Error(`Failed to create directory: ${config.downloadsDir}`);
+      }
+      logger.info(`Directory confirmed: ${config.downloadsDir}`);
 
       const destPath = join(config.downloadsDir, fileName);
-      const dest = createWriteStream(destPath);
+      const destDir = dirname(destPath);
+      
+      // Ensure the parent directory of the file also exists
+      if (destDir !== config.downloadsDir) {
+        await mkdir(destDir, { recursive: true });
+      }
 
       logger.info(`Downloading file ${fileId} to ${destPath}`);
 
@@ -254,13 +266,27 @@ class DriveService {
         { responseType: 'stream' }
       );
 
+      // Create write stream after directory is confirmed to exist
+      const dest = createWriteStream(destPath);
+
       return new Promise((resolve, reject) => {
+        let hasError = false;
+
+        dest.on('error', (err) => {
+          hasError = true;
+          logger.error(`Error writing file ${fileName}`, err);
+          reject(err);
+        });
+
         response.data
           .on('end', () => {
-            logger.info(`Successfully downloaded ${fileName}`);
-            resolve(destPath);
+            if (!hasError) {
+              logger.info(`Successfully downloaded ${fileName}`);
+              resolve(destPath);
+            }
           })
           .on('error', err => {
+            hasError = true;
             logger.error(`Error downloading ${fileName}`, err);
             reject(err);
           })
