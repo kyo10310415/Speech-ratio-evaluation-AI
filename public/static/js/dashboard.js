@@ -2,10 +2,14 @@
 
 let scoreChart = null;
 let lessonsChart = null;
+let selectedTutor = ''; // Track selected tutor
 
 // Initialize dashboard
 async function initDashboard() {
   try {
+    // Load tutors list
+    await loadTutors();
+
     // Load weekly summary
     await loadWeeklySummary();
 
@@ -20,15 +24,48 @@ async function initDashboard() {
   }
 }
 
+// Load tutors list
+async function loadTutors() {
+  try {
+    const response = await axios.get('/api/tutors');
+    const { data } = response.data;
+
+    const selector = document.getElementById('tutorSelector');
+
+    const options = data.map(
+      (tutorName) => `<option value="${tutorName}">${tutorName}</option>`
+    );
+
+    selector.innerHTML = '<option value="">全講師</option>' + options.join('');
+  } catch (error) {
+    console.error('Failed to load tutors:', error);
+  }
+}
+
 // Load weekly summary data
 async function loadWeeklySummary() {
   try {
     const response = await axios.get('/api/weekly-summary');
-    const { data } = response.data;
+    let { data } = response.data;
+
+    // Filter by selected tutor if applicable
+    if (selectedTutor) {
+      data = data.filter(item => item.tutor_name === selectedTutor);
+    }
 
     if (data.length === 0) {
       document.getElementById('weeklySummaryTable').innerHTML =
         '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">データがありません</td></tr>';
+      
+      // Clear charts
+      if (scoreChart) {
+        scoreChart.destroy();
+        scoreChart = null;
+      }
+      if (lessonsChart) {
+        lessonsChart.destroy();
+        lessonsChart = null;
+      }
       return;
     }
 
@@ -239,7 +276,13 @@ function renderWeeklySummaryTable(data) {
 // Load lessons for dropdown
 async function loadLessons() {
   try {
-    const response = await axios.get('/api/lessons');
+    // Build URL with tutor filter if selected
+    let url = '/api/lessons';
+    if (selectedTutor) {
+      url += `?tutor=${encodeURIComponent(selectedTutor)}`;
+    }
+
+    const response = await axios.get(url);
     const { data } = response.data;
 
     const selector = document.getElementById('lessonSelector');
@@ -247,15 +290,28 @@ async function loadLessons() {
     // Sort by date (descending)
     const sortedLessons = data.sort((a, b) => b.date.localeCompare(a.date));
 
-    const options = sortedLessons.map(
-      (lesson) => `
-      <option value="${lesson.file_id}">
-        ${lesson.date} - ${lesson.tutor_name} - ${lesson.file_name}
-      </option>
-    `
-    );
+    // Extract student name from file name
+    const extractStudentName = (fileName) => {
+      // Format: "WannaVレッスン予約 (福田京華) - 2026/01/11 08:55 JST～Recording"
+      const match = fileName.match(/\((.+?)\)/);
+      return match ? match[1] : '不明';
+    };
+
+    const options = sortedLessons.map((lesson) => {
+      const studentName = extractStudentName(lesson.file_name);
+      const displayText = `${lesson.date}_${studentName}`;
+      
+      return `
+        <option value="${lesson.file_id}">
+          ${displayText}
+        </option>
+      `;
+    });
 
     selector.innerHTML = '<option value="">選択してください...</option>' + options.join('');
+    
+    // Hide lesson detail when lessons change
+    document.getElementById('lessonDetail').classList.add('hidden');
   } catch (error) {
     console.error('Failed to load lessons:', error);
   }
@@ -412,9 +468,19 @@ async function loadLessonDetail(fileId) {
 
 // Setup event listeners
 function setupEventListeners() {
-  const selector = document.getElementById('lessonSelector');
+  // Tutor selector
+  const tutorSelector = document.getElementById('tutorSelector');
+  tutorSelector.addEventListener('change', async (e) => {
+    selectedTutor = e.target.value;
+    
+    // Reload data with new filter
+    await loadWeeklySummary();
+    await loadLessons();
+  });
 
-  selector.addEventListener('change', (e) => {
+  // Lesson selector
+  const lessonSelector = document.getElementById('lessonSelector');
+  lessonSelector.addEventListener('change', (e) => {
     const fileId = e.target.value;
 
     if (fileId) {

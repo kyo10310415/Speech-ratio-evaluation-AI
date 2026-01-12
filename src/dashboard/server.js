@@ -18,6 +18,34 @@ app.use('/static/*', serveStatic({ root: './public' }));
 // API Routes
 
 /**
+ * Get list of tutors from 新フォルダURL sheet
+ */
+app.get('/api/tutors', async (c) => {
+  try {
+    await sheetsService.initialize();
+    const data = await sheetsService.getSheetData('新フォルダURL');
+
+    if (data.length <= 1) {
+      return c.json({ success: true, data: [] });
+    }
+
+    // Get tutor names from A column (skip header)
+    const tutorNames = data.slice(1)
+      .map(row => row[0]) // A column
+      .filter(name => name && name.trim() !== '')
+      .sort(); // Sort alphabetically
+
+    // Remove duplicates
+    const uniqueTutors = [...new Set(tutorNames)];
+
+    return c.json({ success: true, data: uniqueTutors });
+  } catch (error) {
+    logger.error('Failed to get tutors list', error);
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+/**
  * Get weekly tutors summary (for charts)
  */
 app.get('/api/weekly-summary', async (c) => {
@@ -52,9 +80,12 @@ app.get('/api/weekly-summary', async (c) => {
 
 /**
  * Get daily lessons (for dropdown selection)
+ * Optional query param: tutor - filter by tutor name
  */
 app.get('/api/lessons', async (c) => {
   try {
+    const tutorFilter = c.req.query('tutor');
+
     await sheetsService.initialize();
     const data = await sheetsService.getSheetData('daily_lessons');
 
@@ -65,9 +96,15 @@ app.get('/api/lessons', async (c) => {
     const headers = data[0];
     const rows = data.slice(1);
 
-    // Filter out ERROR rows
+    // Filter out ERROR rows and apply tutor filter if provided
     const lessons = rows
-      .filter((row) => row[headers.indexOf('status')] === 'OK')
+      .filter((row) => {
+        const isOk = row[headers.indexOf('status')] === 'OK';
+        if (!tutorFilter) return isOk;
+        
+        const tutorName = row[headers.indexOf('tutor_name')];
+        return isOk && tutorName === tutorFilter;
+      })
       .map((row) => ({
         date: row[headers.indexOf('date_jst')],
         tutor_name: row[headers.indexOf('tutor_name')],
@@ -182,6 +219,18 @@ app.get('/', (c) => {
 
             <!-- Main Content -->
             <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                
+                <!-- Tutor Filter Section -->
+                <div class="mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            講師を選択
+                        </label>
+                        <select id="tutorSelector" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">全講師</option>
+                        </select>
+                    </div>
+                </div>
                 
                 <!-- Weekly Summary Section -->
                 <div class="mb-8">
