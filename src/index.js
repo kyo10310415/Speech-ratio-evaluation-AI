@@ -1,38 +1,56 @@
 import { logger } from './utils/logger.js';
-import { runDailyJob } from './jobs/daily.js';
-import { runWeeklyJob } from './jobs/weekly.js';
+import { validateConfig } from './config/index.js';
+import { jobScheduler } from './scheduler/jobScheduler.js';
+import app from './dashboard/server.js';
+import { serve } from '@hono/node-server';
 
 /**
  * Main entry point
- * Runs appropriate job based on command line argument
+ * Starts dashboard server and cron job scheduler
  */
 async function main() {
-  const args = process.argv.slice(2);
-  const command = args[0];
-
-  logger.info('WannaV Lesson Analyzer starting...');
-  logger.info(`Command: ${command || 'none'}`);
+  logger.info('🚀 WannaV Lesson Analyzer starting...');
 
   try {
-    switch (command) {
-      case 'daily':
-        await runDailyJob();
-        break;
+    // Validate environment configuration
+    logger.info('Validating configuration...');
+    validateConfig();
+    logger.info('✅ Configuration validated');
 
-      case 'weekly':
-        await runWeeklyJob();
-        break;
+    // Start job scheduler (cron jobs)
+    logger.info('Starting job scheduler...');
+    jobScheduler.start();
+    logger.info('✅ Job scheduler started');
 
-      default:
-        logger.error('Invalid command. Usage: node src/index.js [daily|weekly]');
-        process.exit(1);
-    }
+    // Start dashboard server
+    const port = parseInt(process.env.DASHBOARD_PORT || '3000', 10);
+    const host = process.env.DASHBOARD_HOST || '0.0.0.0';
 
-    logger.info('Job completed successfully');
-    process.exit(0);
+    logger.info(`Starting dashboard server on ${host}:${port}...`);
+    
+    serve({
+      fetch: app.fetch,
+      port,
+      hostname: host
+    });
+
+    logger.info(`✅ Dashboard server running at http://${host}:${port}`);
+    logger.info('📊 Dashboard: http://localhost:3000');
+    logger.info('📅 Daily job scheduled: 09:00 JST (every day)');
+    logger.info('📅 Weekly job scheduled: 10:00 JST (every Monday)');
+
+    // Graceful shutdown
+    const shutdown = () => {
+      logger.info('Shutting down gracefully...');
+      jobScheduler.stop();
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
 
   } catch (error) {
-    logger.error('Job failed:', error);
+    logger.error('Failed to start application:', error);
     process.exit(1);
   }
 }

@@ -19,9 +19,9 @@ class JobScheduler {
   start() {
     logger.info('Starting job scheduler...');
 
-    // Daily job: Run at 09:00 JST (00:00 UTC)
+    // Daily job: Run at 09:00 JST
     // Cron format: minute hour day month weekday
-    const dailyJob = cron.schedule('0 0 * * *', () => {
+    const dailyJob = cron.schedule('0 9 * * *', () => {
       logger.info('🕐 Daily job triggered at 09:00 JST');
       this.runDailyJob();
     }, {
@@ -31,8 +31,8 @@ class JobScheduler {
     this.jobs.push({ name: 'daily', job: dailyJob });
     logger.info('✅ Daily job scheduled: 09:00 JST (every day)');
 
-    // Weekly job: Run at 10:00 JST every Monday (01:00 UTC Monday)
-    const weeklyJob = cron.schedule('0 1 * * 1', () => {
+    // Weekly job: Run at 10:00 JST every Monday
+    const weeklyJob = cron.schedule('0 10 * * 1', () => {
       logger.info('🕐 Weekly job triggered at 10:00 JST (Monday)');
       this.runWeeklyJob();
     }, {
