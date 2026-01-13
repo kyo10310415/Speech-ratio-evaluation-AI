@@ -196,10 +196,35 @@ class DriveService {
       const files = response.data.files || [];
       logger.info(`Found ${files.length} video files in subfolder ${folderId}`);
 
-      // Filter by date range (convert createdTime to JST)
+      // Filter by date range
+      // Priority 1: Extract date from filename (e.g., "2026/01/11 13:58 JST")
+      // Priority 2: Use createdTime as fallback
       const filteredFiles = files.filter(file => {
-        const createdTime = new Date(file.createdTime);
-        return createdTime >= startDate && createdTime <= endDate;
+        // Try to extract date from filename
+        const fileNameDateMatch = file.name.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})\s+JST/);
+        
+        if (fileNameDateMatch) {
+          // Use date from filename (more accurate)
+          const [, year, month, day, hour, minute] = fileNameDateMatch;
+          const fileDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:00+09:00`);
+          const isInRange = fileDate >= startDate && fileDate <= endDate;
+          
+          if (isInRange) {
+            logger.info(`File "${file.name}" matched by filename date: ${year}-${month}-${day} ${hour}:${minute}`);
+          }
+          
+          return isInRange;
+        } else {
+          // Fallback to createdTime
+          const createdTime = new Date(file.createdTime);
+          const isInRange = createdTime >= startDate && createdTime <= endDate;
+          
+          if (isInRange) {
+            logger.info(`File "${file.name}" matched by createdTime (no date in filename)`);
+          }
+          
+          return isInRange;
+        }
       });
 
       logger.info(`${filteredFiles.length} files match date range in this subfolder`);
