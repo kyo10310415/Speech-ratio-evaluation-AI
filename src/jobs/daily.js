@@ -8,6 +8,7 @@ import { transcriptionService } from '../services/transcriptionService.js';
 import { emotionAnalyzer } from '../analyzers/emotionAnalyzer.js';
 import { processTutorFolder } from '../services/lessonProcessor.js';
 import { processInParallel, calculateOptimalConcurrency } from '../utils/parallelProcessor.js';
+import { executeWithLock } from '../utils/jobLock.js';
 import {
   DAILY_LESSONS_HEADERS,
   DAILY_TUTORS_HEADERS,
@@ -134,7 +135,7 @@ export async function runDailyJob() {
 
 // Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runDailyJob()
+  executeWithLock('daily-job', runDailyJob)
     .then(() => {
       logger.info('Daily job finished');
       process.exit(0);

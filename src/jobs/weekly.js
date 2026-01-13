@@ -3,6 +3,7 @@ import { config, validateConfig } from '../config/env.js';
 import { getWeeklyDateRange } from '../utils/dateUtils.js';
 import { sheetsService } from '../services/sheetsService.js';
 import { emotionAnalyzer } from '../analyzers/emotionAnalyzer.js';
+import { executeWithLock } from '../utils/jobLock.js';
 import {
   WEEKLY_TUTORS_HEADERS,
   calculateWeeklyScore,
@@ -204,7 +205,7 @@ async function generateWeeklyActions(lessons, tutorName, score) {
 
 // Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runWeeklyJob()
+  executeWithLock('weekly-job', runWeeklyJob)
     .then(() => {
       logger.info('Weekly job finished');
       process.exit(0);

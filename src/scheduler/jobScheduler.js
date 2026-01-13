@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { JobLock } from '../utils/jobLock.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,16 +32,17 @@ class JobScheduler {
     this.jobs.push({ name: 'daily', job: dailyJob });
     logger.info('✅ Daily job scheduled: 09:00 JST (every day)');
 
-    // Weekly job: Run at 10:00 JST every Monday
-    const weeklyJob = cron.schedule('0 10 * * 1', () => {
-      logger.info('🕐 Weekly job triggered at 10:00 JST (Monday)');
+    // Weekly job: Run at 12:00 JST every Monday
+    // Wait for daily job to complete (daily: 09:00-11:00)
+    const weeklyJob = cron.schedule('0 12 * * 1', () => {
+      logger.info('🕐 Weekly job triggered at 12:00 JST (Monday)');
       this.runWeeklyJob();
     }, {
       timezone: 'Asia/Tokyo'
     });
 
     this.jobs.push({ name: 'weekly', job: weeklyJob });
-    logger.info('✅ Weekly job scheduled: 10:00 JST (every Monday)');
+    logger.info('✅ Weekly job scheduled: 12:00 JST (every Monday)');
 
     logger.info(`📅 Job scheduler started with ${this.jobs.length} jobs`);
   }
@@ -49,6 +51,13 @@ class JobScheduler {
    * Run daily job in a separate process
    */
   runDailyJob() {
+    // Check if job is already running
+    const lock = new JobLock('daily-job');
+    if (lock.isLocked()) {
+      logger.warn('⚠️ Daily job already running, skipping...');
+      return;
+    }
+
     const jobPath = join(projectRoot, 'src', 'jobs', 'daily.js');
     
     logger.info(`Spawning daily job: node ${jobPath}`);
@@ -76,6 +85,13 @@ class JobScheduler {
    * Run weekly job in a separate process
    */
   runWeeklyJob() {
+    // Check if job is already running
+    const lock = new JobLock('weekly-job');
+    if (lock.isLocked()) {
+      logger.warn('⚠️ Weekly job already running, skipping...');
+      return;
+    }
+
     const jobPath = join(projectRoot, 'src', 'jobs', 'weekly.js');
     
     logger.info(`Spawning weekly job: node ${jobPath}`);
