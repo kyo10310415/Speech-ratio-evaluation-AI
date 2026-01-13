@@ -17,19 +17,23 @@ import {
 
 /**
  * Daily job: Process previous day's lessons
+ * @param {string} testDate - Optional date string (YYYY-MM-DD) for testing
  */
-export async function runDailyJob() {
+export async function runDailyJob(testDate = null) {
   const startTime = Date.now();
   logger.info('========================================');
   logger.info('Starting DAILY JOB');
+  if (testDate) {
+    logger.info(`TEST MODE: Processing date ${testDate}`);
+  }
   logger.info('========================================');
 
   try {
     // Validate configuration
     validateConfig();
 
-    // Get date range (previous day in JST)
-    const { startDate, endDate, dateStr } = getDailyDateRange();
+    // Get date range (previous day in JST or specified test date)
+    const { startDate, endDate, dateStr } = getDailyDateRange(testDate);
     logger.info(`Processing date: ${dateStr}`);
     logger.info(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
@@ -135,7 +139,10 @@ export async function runDailyJob() {
 
 // Run if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  executeWithLock('daily-job', runDailyJob)
+  // Get optional date argument from command line
+  const testDate = process.argv[2]; // e.g., node daily.js 2026-01-13
+  
+  executeWithLock('daily-job', () => runDailyJob(testDate))
     .then(() => {
       logger.info('Daily job finished');
       process.exit(0);
