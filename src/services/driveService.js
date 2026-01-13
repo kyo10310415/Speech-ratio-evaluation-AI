@@ -199,18 +199,39 @@ class DriveService {
       const files = response.data.files || [];
       logger.info(`Found ${files.length} video files in subfolder ${folderId}`);
 
-      // Filter by date range (convert createdTime to JST)
+      // Filter by date range
+      // Priority 1: Extract date from filename (e.g., "2026/01/11 13:58 JST")
+      // Priority 2: Use createdTime as fallback
       const filteredFiles = files.filter(file => {
-        const createdTime = new Date(file.createdTime);
-        const isInRange = createdTime >= startDate && createdTime <= endDate;
+        // Try to extract date from filename
+        const fileNameDateMatch = file.name.match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})\s+JST/);
         
-        if (isInRange) {
-          logger.info(`File "${file.name}" matched: createdTime=${createdTime.toISOString()}`);
+        if (fileNameDateMatch) {
+          // Use date from filename (more accurate for Google Meet recordings)
+          const [, year, month, day, hour, minute] = fileNameDateMatch;
+          const fileDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:00+09:00`);
+          const isInRange = fileDate >= startDate && fileDate <= endDate;
+          
+          if (isInRange) {
+            logger.info(`✅ File "${file.name}" matched by filename date: ${year}-${month}-${day} ${hour}:${minute} JST`);
+          } else {
+            logger.debug(`❌ File "${file.name}" skipped by filename date: ${year}-${month}-${day} ${hour}:${minute} JST (out of range)`);
+          }
+          
+          return isInRange;
         } else {
-          logger.debug(`File "${file.name}" skipped: createdTime=${createdTime.toISOString()} (out of range)`);
+          // Fallback to createdTime (for files without date in filename)
+          const createdTime = new Date(file.createdTime);
+          const isInRange = createdTime >= startDate && createdTime <= endDate;
+          
+          if (isInRange) {
+            logger.info(`✅ File "${file.name}" matched by createdTime (no date in filename): ${createdTime.toISOString()}`);
+          } else {
+            logger.debug(`❌ File "${file.name}" skipped by createdTime: ${createdTime.toISOString()} (out of range)`);
+          }
+          
+          return isInRange;
         }
-        
-        return isInRange;
       });
 
       logger.info(`${filteredFiles.length} files match date range in this subfolder`);
