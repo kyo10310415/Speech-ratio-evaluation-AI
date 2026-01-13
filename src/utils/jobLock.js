@@ -1,6 +1,6 @@
 import { logger } from './logger.js';
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 import { config } from '../config/env.js';
 
 /**
@@ -18,6 +18,13 @@ class JobLock {
    */
   acquire() {
     try {
+      // Ensure temp directory exists
+      const lockDir = dirname(this.lockFile);
+      if (!existsSync(lockDir)) {
+        logger.info(`Creating lock directory: ${lockDir}`);
+        mkdirSync(lockDir, { recursive: true });
+      }
+
       // Check if lock file exists
       if (existsSync(this.lockFile)) {
         const lockData = JSON.parse(readFileSync(this.lockFile, 'utf-8'));
