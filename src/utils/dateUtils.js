@@ -21,13 +21,20 @@ export function getDailyDateRange(testDate = null) {
     targetDate = subDays(now, 1);
   }
   
-  // Start: target day 00:00:00 JST
-  const startDate = new Date(formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd') + 'T00:00:00+09:00');
-  
-  // End: target day 23:59:59 JST
-  const endDate = new Date(formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd') + 'T23:59:59+09:00');
-  
   const dateStr = formatInTimeZone(targetDate, TZ, 'yyyy-MM-dd');
+  
+  // CRITICAL: Use UTC time to avoid timezone issues
+  // Start: target day 00:00:00 JST = previous day 15:00:00 UTC
+  // End: target day 23:59:59 JST = target day 14:59:59 UTC
+  const startDate = new Date(dateStr + 'T00:00:00+09:00');
+  const endDate = new Date(dateStr + 'T23:59:59+09:00');
+  
+  console.log('=== Date Range Calculation ===');
+  console.log('Target date (JST):', dateStr);
+  console.log('Start (UTC):', startDate.toISOString());
+  console.log('End (UTC):', endDate.toISOString());
+  console.log('Start (JST):', formatInTimeZone(startDate, TZ, 'yyyy-MM-dd HH:mm:ss zzz'));
+  console.log('End (JST):', formatInTimeZone(endDate, TZ, 'yyyy-MM-dd HH:mm:ss zzz'));
   
   return { startDate, endDate, dateStr };
 }
