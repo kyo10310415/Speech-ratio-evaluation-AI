@@ -240,7 +240,7 @@ pm2 delete wannav-dashboard
 
 4. **サービス起動**
    - ダッシュボード: https://speech-ratio-evaluation-ai.onrender.com
-   - Cron Jobs: 自動実行（毎日 09:00 JST / 毎週月曜日 10:00 JST）
+   - Cron Jobs: 自動実行（毎日 09:00 JST / 毎週月曜日 12:00 JST）
 
 **詳細**: [RENDER_DEPLOY_GUIDE.md](./RENDER_DEPLOY_GUIDE.md)
 

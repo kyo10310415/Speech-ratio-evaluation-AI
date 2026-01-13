@@ -37,7 +37,7 @@ async function main() {
     logger.info(`✅ Dashboard server running at http://${host}:${port}`);
     logger.info('📊 Dashboard: http://localhost:3000');
     logger.info('📅 Daily job scheduled: 09:00 JST (every day)');
-    logger.info('📅 Weekly job scheduled: 10:00 JST (every Monday)');
+    logger.info('📅 Weekly job scheduled: 12:00 JST (every Monday)');
 
     // Graceful shutdown
     const shutdown = () => {
