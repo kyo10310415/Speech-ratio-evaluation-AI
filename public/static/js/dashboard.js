@@ -1,6 +1,6 @@
 // Dashboard JavaScript
 
-let scoreChart = null;
+let talkRatioChart = null;
 let lessonsChart = null;
 let selectedTutor = ''; // Track selected tutor
 
@@ -10,8 +10,8 @@ async function initDashboard() {
     // Load tutors list
     await loadTutors();
 
-    // Load weekly summary
-    await loadWeeklySummary();
+    // Load monthly summary
+    await loadMonthlySummary();
 
     // Load lessons for dropdown
     await loadLessons();
@@ -42,10 +42,10 @@ async function loadTutors() {
   }
 }
 
-// Load weekly summary data
-async function loadWeeklySummary() {
+// Load monthly summary data
+async function loadMonthlySummary() {
   try {
-    const response = await axios.get('/api/weekly-summary');
+    const response = await axios.get('/api/monthly-summary');
     let { data } = response.data;
 
     // Filter by selected tutor if applicable
@@ -54,13 +54,13 @@ async function loadWeeklySummary() {
     }
 
     if (data.length === 0) {
-      document.getElementById('weeklySummaryTable').innerHTML =
-        '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">データがありません</td></tr>';
+      document.getElementById('monthlySummaryTable').innerHTML =
+        '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">データがありません</td></tr>';
       
       // Clear charts
-      if (scoreChart) {
-        scoreChart.destroy();
-        scoreChart = null;
+      if (talkRatioChart) {
+        talkRatioChart.destroy();
+        talkRatioChart = null;
       }
       if (lessonsChart) {
         lessonsChart.destroy();
@@ -79,23 +79,23 @@ async function loadWeeklySummary() {
     });
 
     // Render charts
-    renderScoreChart(tutorData);
+    renderTalkRatioChart(tutorData);
     renderLessonsChart(tutorData);
 
     // Render table
-    renderWeeklySummaryTable(data);
+    renderMonthlySummaryTable(data);
   } catch (error) {
-    console.error('Failed to load weekly summary:', error);
+    console.error('Failed to load monthly summary:', error);
   }
 }
 
-// Render score chart
-function renderScoreChart(tutorData) {
-  const ctx = document.getElementById('scoreChart').getContext('2d');
+// Render talk ratio chart
+function renderTalkRatioChart(tutorData) {
+  const ctx = document.getElementById('talkRatioChart').getContext('2d');
 
   // Destroy existing chart
-  if (scoreChart) {
-    scoreChart.destroy();
+  if (talkRatioChart) {
+    talkRatioChart.destroy();
   }
 
   // Prepare datasets
@@ -108,32 +108,32 @@ function renderScoreChart(tutorData) {
   ];
 
   const datasets = Object.keys(tutorData).map((tutorName, index) => {
-    const tutorWeeks = tutorData[tutorName].sort((a, b) =>
-      a.week_start.localeCompare(b.week_start)
+    const tutorMonths = tutorData[tutorName].sort((a, b) =>
+      a.month.localeCompare(b.month)
     );
 
     return {
       label: tutorName,
-      data: tutorWeeks.map((w) => w.weekly_score),
+      data: tutorMonths.map((m) => (m.avg_tutor_talk_ratio * 100).toFixed(1)),
       borderColor: colors[index % colors.length],
       backgroundColor: colors[index % colors.length].replace('rgb', 'rgba').replace(')', ', 0.1)'),
       tension: 0.3,
     };
   });
 
-  // Get all unique weeks (sorted)
-  const allWeeks = [
+  // Get all unique months (sorted)
+  const allMonths = [
     ...new Set(
       Object.values(tutorData)
         .flat()
-        .map((w) => w.week_start)
+        .map((m) => m.month)
     ),
   ].sort();
 
-  scoreChart = new Chart(ctx, {
+  talkRatioChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: allWeeks,
+      labels: allMonths,
       datasets: datasets,
     },
     options: {
@@ -152,13 +152,13 @@ function renderScoreChart(tutorData) {
           max: 100,
           title: {
             display: true,
-            text: 'スコア',
+            text: '講師発話比率 (%)',
           },
         },
         x: {
           title: {
             display: true,
-            text: '週',
+            text: '月',
           },
         },
       },
@@ -185,30 +185,30 @@ function renderLessonsChart(tutorData) {
   ];
 
   const datasets = Object.keys(tutorData).map((tutorName, index) => {
-    const tutorWeeks = tutorData[tutorName].sort((a, b) =>
-      a.week_start.localeCompare(b.week_start)
+    const tutorMonths = tutorData[tutorName].sort((a, b) =>
+      a.month.localeCompare(b.month)
     );
 
     return {
       label: tutorName,
-      data: tutorWeeks.map((w) => w.lessons_count),
+      data: tutorMonths.map((m) => m.lessons_count),
       backgroundColor: colors[index % colors.length],
     };
   });
 
-  // Get all unique weeks
-  const allWeeks = [
+  // Get all unique months
+  const allMonths = [
     ...new Set(
       Object.values(tutorData)
         .flat()
-        .map((w) => w.week_start)
+        .map((m) => m.month)
     ),
   ].sort();
 
   lessonsChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: allWeeks,
+      labels: allMonths,
       datasets: datasets,
     },
     options: {
@@ -229,7 +229,7 @@ function renderLessonsChart(tutorData) {
         x: {
           title: {
             display: true,
-            text: '週',
+            text: '月',
           },
         },
       },
@@ -237,21 +237,22 @@ function renderLessonsChart(tutorData) {
   });
 }
 
-// Render weekly summary table
-function renderWeeklySummaryTable(data) {
-  const tableBody = document.getElementById('weeklySummaryTable');
+// Render monthly summary table
+function renderMonthlySummaryTable(data) {
+  const tableBody = document.getElementById('monthlySummaryTable');
 
-  // Sort by week (descending)
-  const sortedData = data.sort((a, b) => b.week_start.localeCompare(a.week_start));
+  // Sort by month (descending)
+  const sortedData = data.sort((a, b) => b.month.localeCompare(a.month));
 
   const rows = sortedData
     .map((item) => {
-      const scoreColor = item.weekly_score >= 80 ? 'text-green-600' : item.weekly_score >= 60 ? 'text-yellow-600' : 'text-red-600';
+      const talkRatioPercent = (item.avg_tutor_talk_ratio * 100).toFixed(1);
+      const ratioColor = item.avg_tutor_talk_ratio <= 0.6 ? 'text-green-600' : item.avg_tutor_talk_ratio <= 0.7 ? 'text-yellow-600' : 'text-red-600';
 
       return `
       <tr>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-          ${item.week_start} 〜 ${item.week_end}
+          ${item.month}
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
           ${item.tutor_name}
@@ -259,11 +260,14 @@ function renderWeeklySummaryTable(data) {
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
           ${item.lessons_count}
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${scoreColor}">
-          ${item.weekly_score} / 100
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${ratioColor}">
+          ${talkRatioPercent}%
         </td>
-        <td class="px-6 py-4 text-sm text-gray-700">
-          ${item.key_findings || '-'}
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${item.avg_silence_15s_count.toFixed(1)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+          ${item.total_duration_min.toFixed(0)}分
         </td>
       </tr>
     `;
@@ -287,8 +291,8 @@ async function loadLessons() {
 
     const selector = document.getElementById('lessonSelector');
 
-    // Sort by date (descending)
-    const sortedLessons = data.sort((a, b) => b.date.localeCompare(a.date));
+    // Sort by month (descending)
+    const sortedLessons = data.sort((a, b) => b.month.localeCompare(a.month));
 
     // Extract student name from file name
     const extractStudentName = (fileName) => {
@@ -299,7 +303,7 @@ async function loadLessons() {
 
     const options = sortedLessons.map((lesson) => {
       const studentName = extractStudentName(lesson.file_name);
-      const displayText = `${lesson.date}_${studentName}`;
+      const displayText = `${lesson.month}_${studentName}`;
       
       return `
         <option value="${lesson.file_id}">
@@ -335,7 +339,7 @@ async function loadLessonDetail(fileId) {
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
           <h3 class="text-xl font-semibold">${lesson.file_name}</h3>
           <p class="text-sm text-gray-600 mt-1">
-            ${lesson.date} | ${lesson.tutor_name} | ${Math.floor(lesson.duration_sec / 60)}分${lesson.duration_sec % 60}秒
+            ${lesson.month} | ${lesson.tutor_name} | ${Math.floor(lesson.duration_sec / 60)}分${lesson.duration_sec % 60}秒
           </p>
         </div>
 
@@ -474,7 +478,7 @@ function setupEventListeners() {
     selectedTutor = e.target.value;
     
     // Reload data with new filter
-    await loadWeeklySummary();
+    await loadMonthlySummary();
     await loadLessons();
   });
 

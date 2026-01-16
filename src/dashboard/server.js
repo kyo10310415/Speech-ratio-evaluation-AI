@@ -46,12 +46,12 @@ app.get('/api/tutors', async (c) => {
 });
 
 /**
- * Get weekly tutors summary (for charts)
+ * Get monthly tutors summary (for charts)
  */
-app.get('/api/weekly-summary', async (c) => {
+app.get('/api/monthly-summary', async (c) => {
   try {
     await sheetsService.initialize();
-    const data = await sheetsService.getSheetData('weekly_tutors');
+    const data = await sheetsService.getSheetData('monthly_tutors');
 
     if (data.length <= 1) {
       return c.json({ success: true, data: [] });
@@ -61,25 +61,23 @@ app.get('/api/weekly-summary', async (c) => {
     const rows = data.slice(1);
 
     const summary = rows.map((row) => ({
-      week_start: row[headers.indexOf('week_start_jst')],
-      week_end: row[headers.indexOf('week_end_jst')],
+      month: row[headers.indexOf('date_jst')], // 2026-01 format
       tutor_name: row[headers.indexOf('tutor_name')],
       lessons_count: parseInt(row[headers.indexOf('lessons_count')] || 0),
-      weekly_score: parseFloat(row[headers.indexOf('weekly_score_total')] || 0),
-      score_breakdown: row[headers.indexOf('score_breakdown')],
-      key_findings: row[headers.indexOf('weekly_key_findings')],
-      actions: row[headers.indexOf('weekly_actions_top3')],
+      avg_tutor_talk_ratio: parseFloat(row[headers.indexOf('avg_tutor_talk_ratio')] || 0),
+      avg_silence_15s_count: parseFloat(row[headers.indexOf('avg_silence_15s_count')] || 0),
+      total_duration_min: parseFloat(row[headers.indexOf('total_duration_min')] || 0),
     }));
 
     return c.json({ success: true, data: summary });
   } catch (error) {
-    logger.error('Failed to get weekly summary', error);
+    logger.error('Failed to get monthly summary', error);
     return c.json({ success: false, error: error.message }, 500);
   }
 });
 
 /**
- * Get daily lessons (for dropdown selection)
+ * Get monthly lessons (for dropdown selection)
  * Optional query param: tutor - filter by tutor name
  */
 app.get('/api/lessons', async (c) => {
@@ -87,7 +85,7 @@ app.get('/api/lessons', async (c) => {
     const tutorFilter = c.req.query('tutor');
 
     await sheetsService.initialize();
-    const data = await sheetsService.getSheetData('daily_lessons');
+    const data = await sheetsService.getSheetData('monthly_lessons');
 
     if (data.length <= 1) {
       return c.json({ success: true, data: [] });
@@ -106,7 +104,7 @@ app.get('/api/lessons', async (c) => {
         return isOk && tutorName === tutorFilter;
       })
       .map((row) => ({
-        date: row[headers.indexOf('date_jst')],
+        month: row[headers.indexOf('date_jst')], // Changed from date to month
         tutor_name: row[headers.indexOf('tutor_name')],
         file_id: row[headers.indexOf('drive_file_id')],
         file_name: row[headers.indexOf('drive_file_name')],
@@ -139,7 +137,7 @@ app.get('/api/lessons/:fileId', async (c) => {
     const fileId = c.req.param('fileId');
 
     await sheetsService.initialize();
-    const data = await sheetsService.getSheetData('daily_lessons');
+    const data = await sheetsService.getSheetData('monthly_lessons');
 
     if (data.length <= 1) {
       return c.json({ success: false, error: 'No lessons found' }, 404);
@@ -155,7 +153,7 @@ app.get('/api/lessons/:fileId', async (c) => {
     }
 
     const lesson = {
-      date: row[headers.indexOf('date_jst')],
+      month: row[headers.indexOf('date_jst')], // Changed from date to month
       tutor_name: row[headers.indexOf('tutor_name')],
       file_id: row[fileIdIndex],
       file_name: row[headers.indexOf('drive_file_name')],
@@ -232,16 +230,16 @@ app.get('/', (c) => {
                     </div>
                 </div>
                 
-                <!-- Weekly Summary Section -->
+                <!-- Monthly Summary Section -->
                 <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📈 週次評価</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">📈 月次評価</h2>
                     
                     <!-- Charts Grid -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <!-- Score Chart -->
+                        <!-- Talk Ratio Chart -->
                         <div class="bg-white rounded-lg shadow p-6">
-                            <h3 class="text-lg font-semibold mb-4">週次スコア推移</h3>
-                            <canvas id="scoreChart"></canvas>
+                            <h3 class="text-lg font-semibold mb-4">講師発話比率 推移</h3>
+                            <canvas id="talkRatioChart"></canvas>
                         </div>
 
                         <!-- Lessons Count Chart -->
@@ -251,23 +249,24 @@ app.get('/', (c) => {
                         </div>
                     </div>
 
-                    <!-- Weekly Summary Table -->
+                    <!-- Monthly Summary Table -->
                     <div class="bg-white rounded-lg shadow overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold">週次サマリー</h3>
+                            <h3 class="text-lg font-semibold">月次サマリー</h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">週</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">月</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">講師</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">レッスン数</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">スコア</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">主要所見</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均発話比率</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均沈黙回数</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">合計時間(分)</th>
                                     </tr>
                                 </thead>
-                                <tbody id="weeklySummaryTable" class="bg-white divide-y divide-gray-200">
+                                <tbody id="monthlySummaryTable" class="bg-white divide-y divide-gray-200">
                                     <!-- Populated by JS -->
                                 </tbody>
                             </table>
