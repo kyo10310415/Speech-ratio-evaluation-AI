@@ -1,8 +1,21 @@
-# WannaV レッスン分析自動化システム v2.1
+# WannaV レッスン分析自動化システム v3.0
 
 Google Meet録画を自動解析し、講師のパフォーマンスと生徒の受講体験を定量化・可視化するシステムです。
 
-## 🆕 v2.1 新機能
+## 🆕 v3.0 新機能
+
+### 📅 月次自動評価
+- **毎月末に自動実行**（23:00 JST）
+- **全講師からランダムに2レッスンずつサンプリング**
+- 効率的な品質モニタリング
+- Daily/Weekly ジョブは廃止
+
+### 🎲 ランダムサンプリング
+- 講師ごとに今月の全動画からランダムに2件選択
+- 偏りのない公平な評価
+- 処理時間の大幅短縮（全レッスンの代わりにサンプルのみ）
+
+## v2.1 機能
 
 ### ⚡ 並列処理
 - **5並列で処理時間を83%削減**（420分 → 84分）
@@ -89,12 +102,14 @@ Google Meet録画を自動解析し、講師のパフォーマンスと生徒の
 
 ### 出力
 1. **Google Sheets**
-   - daily_lessons: レッスン詳細データ
-   - daily_tutors: 講師×日別集計
-   - weekly_tutors: 講師×週別スコア
+   - monthly_lessons: レッスン詳細データ（ランダムサンプリング）
+   - monthly_tutors: 講師×月別集計
+   - ~~daily_lessons~~: 廃止
+   - ~~daily_tutors~~: 廃止
+   - ~~weekly_tutors~~: 廃止
 
-2. **Webダッシュボード** (NEW!)
-   - 週次スコア推移グラフ
+2. **Webダッシュボード**
+   - 月次スコア推移グラフ
    - レッスン数推移グラフ
    - レッスンごと詳細表示
 
@@ -190,11 +205,11 @@ sudo apt-get install -y ffmpeg
 # 環境変数検証
 npm run validate
 
-# 日次ジョブ（前日分）
-npm run daily
+# 月次ジョブ（今月分・全講師からランダム2件ずつ）
+npm run monthly
 
-# 週次ジョブ（前週月〜日）
-npm run weekly
+# テストモード（特定月を指定）
+npm run monthly:test 2026-01-15  # 2026年1月のデータを処理
 ```
 
 ### Webダッシュボード
@@ -240,7 +255,7 @@ pm2 delete wannav-dashboard
 
 4. **サービス起動**
    - ダッシュボード: https://speech-ratio-evaluation-ai.onrender.com
-   - Cron Jobs: 自動実行（毎日 09:00 JST / 毎週月曜日 12:00 JST）
+   - Cron Jobs: 自動実行（**毎月末 23:00 JST - 全講師からランダム2レッスンずつ評価**）
 
 **詳細**: [RENDER_DEPLOY_GUIDE.md](./RENDER_DEPLOY_GUIDE.md)
 

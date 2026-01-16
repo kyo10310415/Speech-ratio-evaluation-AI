@@ -118,7 +118,9 @@ function cleanup(...paths) {
 /**
  * Process all lessons for a tutor's folder
  * @param {Object} params
- * @returns {Array} Array of rows
+ * @param {boolean} skipProcessing - If true, only return video info without processing
+ * @param {string} specificFileId - If provided, only process this specific file
+ * @returns {Array} Array of rows or video info objects
  */
 export async function processTutorFolder({
   tutorName,
@@ -127,6 +129,8 @@ export async function processTutorFolder({
   startDate,
   endDate,
   processedFileIds,
+  skipProcessing = false,
+  specificFileId = null,
 }) {
   const rows = [];
 
@@ -143,15 +147,36 @@ export async function processTutorFolder({
       return rows;
     }
 
-    // Filter out already processed files
-    const unprocessedFiles = files.filter(f => !processedFileIds.has(f.id));
+    // If specificFileId is provided, filter to only that file
+    let targetFiles = files;
+    if (specificFileId) {
+      targetFiles = files.filter(f => f.id === specificFileId);
+      if (targetFiles.length === 0) {
+        logger.warn(`Specific file ${specificFileId} not found`);
+        return rows;
+      }
+    }
+
+    // Filter out already processed files (unless specificFileId is set)
+    const unprocessedFiles = specificFileId 
+      ? targetFiles 
+      : targetFiles.filter(f => !processedFileIds.has(f.id));
 
     if (unprocessedFiles.length === 0) {
-      logger.info(`All ${files.length} videos already processed for ${tutorName}`);
+      logger.info(`All ${targetFiles.length} videos already processed for ${tutorName}`);
       return rows;
     }
 
     logger.info(`Found ${unprocessedFiles.length} unprocessed videos for ${tutorName}`);
+
+    // If skipProcessing, return video info only
+    if (skipProcessing) {
+      return unprocessedFiles.map(file => ({
+        fileId: file.id,
+        fileName: file.name,
+        createdTime: file.createdTime,
+      }));
+    }
 
     // Process each video
     for (const file of unprocessedFiles) {

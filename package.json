@@ -10,6 +10,8 @@
     "daily:test": "node src/jobs/daily-test.js",
     "daily:full": "node src/jobs/daily.js",
     "weekly": "node src/jobs/weekly.js",
+    "monthly": "node src/jobs/monthly.js",
+    "monthly:test": "node src/jobs/monthly.js",
     "dashboard": "node src/dashboard/server.js",
     "validate": "node src/validate-env.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",

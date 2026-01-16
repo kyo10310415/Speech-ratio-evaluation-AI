@@ -1,5 +1,5 @@
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { subDays, startOfWeek, endOfWeek, subWeeks, format } from 'date-fns';
+import { subDays, startOfWeek, endOfWeek, subWeeks, format, startOfMonth, endOfMonth } from 'date-fns';
 import { config } from '../config/env.js';
 
 const TZ = config.timezone;
@@ -72,6 +72,44 @@ export function getWeeklyDateRange() {
  */
 export function toJSTString(isoString) {
   return formatInTimeZone(new Date(isoString), TZ, 'yyyy-MM-dd HH:mm:ss');
+}
+
+/**
+ * Get date range for monthly job (current month in JST)
+ * @param {string} testDate - Optional test date in yyyy-MM-dd format (for testing)
+ * @returns {Object} { startDate, endDate, monthStr }
+ */
+export function getMonthlyDateRange(testDate = null) {
+  let targetDate;
+  
+  if (testDate) {
+    // Test mode: use specified date's month
+    targetDate = toZonedTime(new Date(testDate + 'T12:00:00+09:00'), TZ);
+  } else {
+    // Production mode: use current month
+    targetDate = toZonedTime(new Date(), TZ);
+  }
+  
+  // Get first and last day of the month
+  const monthStart = startOfMonth(targetDate);
+  const monthEnd = endOfMonth(targetDate);
+  
+  const monthStr = formatInTimeZone(targetDate, TZ, 'yyyy-MM');
+  
+  // CRITICAL: Use UTC time to avoid timezone issues
+  // Start: first day 00:00:00 JST
+  // End: last day 23:59:59 JST
+  const startDate = new Date(formatInTimeZone(monthStart, TZ, 'yyyy-MM-dd') + 'T00:00:00+09:00');
+  const endDate = new Date(formatInTimeZone(monthEnd, TZ, 'yyyy-MM-dd') + 'T23:59:59+09:00');
+  
+  console.log('=== Monthly Date Range Calculation ===');
+  console.log('Target month (JST):', monthStr);
+  console.log('Start (UTC):', startDate.toISOString());
+  console.log('End (UTC):', endDate.toISOString());
+  console.log('Start (JST):', formatInTimeZone(startDate, TZ, 'yyyy-MM-dd HH:mm:ss zzz'));
+  console.log('End (JST):', formatInTimeZone(endDate, TZ, 'yyyy-MM-dd HH:mm:ss zzz'));
+  
+  return { startDate, endDate, monthStr };
 }
 
 /**
