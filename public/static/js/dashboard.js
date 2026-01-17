@@ -114,7 +114,7 @@ function renderTalkRatioChart(tutorData) {
 
     return {
       label: tutorName,
-      data: tutorMonths.map((m) => (m.avg_tutor_talk_ratio * 100).toFixed(1)),
+      data: tutorMonths.map((m) => (m.avg_talk_ratio * 100).toFixed(1)),
       borderColor: colors[index % colors.length],
       backgroundColor: colors[index % colors.length].replace('rgb', 'rgba').replace(')', ', 0.1)'),
       tension: 0.3,
