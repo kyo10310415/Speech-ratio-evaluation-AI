@@ -11,8 +11,8 @@ import { processInParallel, calculateOptimalConcurrency } from '../utils/paralle
 import { executeWithLock } from '../utils/jobLock.js';
 import {
   DAILY_LESSONS_HEADERS,
-  DAILY_TUTORS_HEADERS,
-  aggregateDailyTutors,
+  MONTHLY_TUTORS_HEADERS,
+  aggregateMonthlyTutors,
 } from '../utils/sheetFormatters.js';
 
 /**
@@ -165,11 +165,11 @@ export async function runMonthlyJob(testDate = null) {
     }
 
     // Aggregate tutors and write to monthly_tutors sheet
-    const tutorRows = aggregateDailyTutors(allLessonRows);
+    const tutorRows = aggregateMonthlyTutors(allLessonRows, monthStr);
     
     if (tutorRows.length > 0) {
       await sheetsService.getOrCreateSheet('monthly_tutors');
-      await sheetsService.writeHeaders('monthly_tutors', DAILY_TUTORS_HEADERS);
+      await sheetsService.writeHeaders('monthly_tutors', MONTHLY_TUTORS_HEADERS);
       await sheetsService.appendRows('monthly_tutors', tutorRows);
       logger.info(`Appended ${tutorRows.length} rows to monthly_tutors`);
     }

@@ -49,6 +49,18 @@ export const DAILY_TUTORS_HEADERS = [
 ];
 
 /**
+ * Headers for monthly_tutors sheet
+ */
+export const MONTHLY_TUTORS_HEADERS = [
+  'date_jst',
+  'tutor_name',
+  'lessons_count',
+  'avg_tutor_talk_ratio',
+  'avg_silence_15s_count',
+  'total_duration_min',
+];
+
+/**
  * Headers for weekly_tutors sheet
  */
 export const WEEKLY_TUTORS_HEADERS = [
@@ -163,6 +175,56 @@ export function formatErrorRow({
  * @param {string} dateJst 
  * @returns {Array} Array of daily_tutors rows
  */
+/**
+ * Aggregate monthly tutors summary
+ * @param {Array} lessons - Array of lesson rows
+ * @param {string} monthJst - Month string (YYYY-MM)
+ * @returns {Array} Array of tutor summary rows
+ */
+export function aggregateMonthlyTutors(lessons, monthJst) {
+  const tutorMap = new Map();
+
+  lessons.forEach(lesson => {
+    const tutorName = lesson[1]; // tutor_name column
+    const status = lesson[25]; // status column
+
+    if (status === 'ERROR') return; // Skip errors
+
+    if (!tutorMap.has(tutorName)) {
+      tutorMap.set(tutorName, {
+        lessons: [],
+      });
+    }
+
+    tutorMap.get(tutorName).lessons.push(lesson);
+  });
+
+  const rows = [];
+
+  tutorMap.forEach((data, tutorName) => {
+    const lessonsCount = data.lessons.length;
+    
+    if (lessonsCount === 0) return;
+
+    // Calculate averages
+    const avgTalkRatio = data.lessons.reduce((sum, l) => sum + parseFloat(l[7] || 0), 0) / lessonsCount;
+    const avgSilence15s = data.lessons.reduce((sum, l) => sum + parseInt(l[14] || 0), 0) / lessonsCount;
+    const totalDurationSec = data.lessons.reduce((sum, l) => sum + parseInt(l[6] || 0), 0);
+    const totalDurationMin = totalDurationSec / 60;
+
+    rows.push([
+      monthJst,
+      tutorName,
+      lessonsCount,
+      parseFloat(avgTalkRatio.toFixed(3)),
+      parseFloat(avgSilence15s.toFixed(1)),
+      parseFloat(totalDurationMin.toFixed(1)),
+    ]);
+  });
+
+  return rows;
+}
+
 export function aggregateDailyTutors(lessons, dateJst) {
   const tutorMap = new Map();
 
