@@ -2,6 +2,16 @@
 
 Google Meet録画を自動解析し、講師のパフォーマンスと生徒の受講体験を定量化・可視化するシステムです。
 
+## 🚨 月次サマリーが0になる問題の解決方法
+
+**症状**: ダッシュボードで「平均発話比率: 0.0%」「平均沈黙回数: 0.0」と表示される
+
+**即座に解決**: [QUICK_START_FIX.md](./QUICK_START_FIX.md) を参照（5分で実行、2-3時間で完了）
+
+**詳細な手順**: [MONTHLY_SUMMARY_FIX.md](./MONTHLY_SUMMARY_FIX.md)
+
+**デバッグツール**: Render Shellで `node debug-monthly-summary.js` を実行
+
 ## 🆕 v3.0 新機能
 
 ### 📅 月次自動評価
