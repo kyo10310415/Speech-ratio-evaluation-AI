@@ -15,6 +15,9 @@ app.use('/api/*', cors());
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }));
 
+// Serve manual.html
+app.get('/manual.html', serveStatic({ path: './public/manual.html' }));
+
 // API Routes
 
 /**
