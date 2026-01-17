@@ -208,10 +208,13 @@ app.get('/', (c) => {
         <div class="min-h-screen">
             <!-- Header -->
             <header class="bg-white shadow">
-                <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
                     <h1 class="text-3xl font-bold text-gray-900">
                         📊 WannaV レッスン分析ダッシュボード
                     </h1>
+                    <a href="/manual.html" target="_blank" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        📖 ユーザーマニュアル
+                    </a>
                 </div>
             </header>
 

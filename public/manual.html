@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WannaV レッスン分析システム ユーザーマニュアル</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+                padding: 20mm;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            a {
+                color: #000;
+                text-decoration: none;
+            }
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro', 'Yu Gothic', 'メイリオ', Meiryo, sans-serif;
+            line-height: 1.8;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background: #fff;
+        }
+        
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        h2 {
+            color: #1e40af;
+            border-left: 5px solid #2563eb;
+            padding-left: 15px;
+            margin-top: 40px;
+            font-size: 24px;
+        }
+        
+        h3 {
+            color: #1e3a8a;
+            margin-top: 30px;
+            font-size: 20px;
+        }
+        
+        h4 {
+            color: #1e40af;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        h5 {
+            color: #475569;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+        
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f1f5f9;
+            font-weight: bold;
+        }
+        
+        .box {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: #f8fafc;
+        }
+        
+        .info {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+        
+        .success {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+        
+        .warning {
+            background: #fefce8;
+            border-color: #eab308;
+        }
+        
+        .danger {
+            background: #fef2f2;
+            border-color: #ef4444;
+        }
+        
+        .header-info {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .toc {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+        }
+        
+        .toc a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+        }
+        
+        ul, ol {
+            padding-left: 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #64748b;
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WannaV レッスン分析システム<br>ユーザーマニュアル</h1>
+    
+    <div class="header-info">
+        <strong>バージョン:</strong> 3.0<br>
+        <strong>最終更新:</strong> 2026年1月
+    </div>
+    
+    <div class="toc">
+        <h2>📖 目次</h2>
+        <ul>
+            <li><a href="#overview">1. システム概要</a></li>
+            <li><a href="#dashboard">2. ダッシュボードの使い方</a></li>
+            <li><a href="#report">3. 月次評価レポートの見方</a></li>
+            <li><a href="#faq">4. よくある質問</a></li>
+        </ul>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <h2 id="overview">システム概要</h2>
+    
+    <h3>このシステムでできること</h3>
+    
+    <p>WannaVレッスン分析システムは、Google Meetのレッスン録画を自動的に分析し、講師のパフォーマンスを評価するシステムです。</p>
+    
+    <div class="box info">
+        <strong>主な機能:</strong>
+        <ul>
+            <li><span class="emoji">📊</span> <strong>月次評価</strong>: 毎月末に全講師からランダムに2レッスンずつ自動評価</li>
+            <li><span class="emoji">📈</span> <strong>グラフ表示</strong>: 講師発話比率とレッスン数の推移を可視化</li>
+            <li><span class="emoji">🎥</span> <strong>詳細分析</strong>: 個別レッスンの詳細なKPI・感情分析</li>
+            <li><span class="emoji">👥</span> <strong>講師フィルター</strong>: 特定の講師のデータだけを表示</li>
+        </ul>
+    </div>
+    
+    <h3>自動評価のタイミング</h3>
+    
+    <div class="box warning">
+        <ul>
+            <li><strong>毎月末日の23:00（日本時間）</strong>に自動実行</li>
+            <li>全講師の今月の録画から<strong>ランダムに2件ずつ</strong>選んで分析</li>
+            <li>翌朝にはダッシュボードで結果を確認できます</li>
+        </ul>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <h2 id="dashboard">ダッシュボードの使い方</h2>
+    
+    <h3>アクセス方法</h3>
+    
+    <div class="box info">
+        <strong>ダッシュボードURL:</strong><br>
+        <a href="https://speech-ratio-evaluation-ai.onrender.com" target="_blank">
+            https://speech-ratio-evaluation-ai.onrender.com
+        </a>
+    </div>
+    
+    <p>ブラウザで上記URLを開くだけでアクセスできます。</p>
+    
+    <h3>画面の見方</h3>
+    
+    <h4>1. 講師選択エリア</h4>
+    
+    <pre>┌─────────────────────────────────┐
+│ 講師を選択: [全講師 ▼]           │
+└─────────────────────────────────┘</pre>
+    
+    <ul>
+        <li><strong>全講師</strong>: すべての講師のデータを表示</li>
+        <li><strong>特定の講師</strong>: 選択した講師のデータのみ表示</li>
+    </ul>
+    
+    <div class="box">
+        <strong>使い方:</strong>
+        <ol>
+            <li>ドロップダウンをクリック</li>
+            <li>見たい講師を選択</li>
+            <li>グラフとテーブルが自動更新されます</li>
+        </ol>
+    </div>
+    
+    <h4>2. 月次評価エリア</h4>
+    
+    <h5>📈 講師発話比率 推移グラフ</h5>
+    
+    <pre>講師発話比率 推移
+100% ┤
+ 80% ┤     ●──●
+ 60% ┤  ●─┘     
+ 40% ┤
+  0% ┼─────────────────
+     2025-12  2026-01  2026-02</pre>
+    
+    <table>
+        <tr>
+            <th>項目</th>
+            <th>説明</th>
+        </tr>
+        <tr>
+            <td><strong>縦軸</strong></td>
+            <td>講師の発話比率（%）</td>
+        </tr>
+        <tr>
+            <td><strong>横軸</strong></td>
+            <td>月</td>
+        </tr>
+        <tr>
+            <td><strong>理想値</strong></td>
+            <td>50-60%（生徒がしっかり話せている）</td>
+        </tr>
+        <tr>
+            <td><strong>注意値</strong></td>
+            <td>70%以上（講師が話しすぎ）</td>
+        </tr>
+    </table>
+    
+    <div class="box">
+        <strong>色の意味:</strong>
+        <ul>
+            <li>🟢 <strong>緑（60%以下）</strong>: 良好</li>
+            <li>🟡 <strong>黄色（60-70%）</strong>: 普通</li>
+            <li>🔴 <strong>赤（70%以上）</strong>: 要改善</li>
+        </ul>
+    </div>
+    
+    <h5>📊 レッスン数推移グラフ</h5>
+    
+    <pre>レッスン数推移
+ 3 ┤     ██
+ 2 ┤  ██ ██ ██
+ 1 ┤
+ 0 ┼─────────────────
+   2025-12  2026-01  2026-02</pre>
+    
+    <p><strong>見方</strong>: 各月に評価されたレッスン数（通常2件）</p>
+    
+    <div class="page-break"></div>
+    
+    <h5>📋 月次サマリーテーブル</h5>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>月</th>
+                <th>講師</th>
+                <th>レッスン数</th>
+                <th>平均発話比率</th>
+                <th>平均沈黙回数</th>
+                <th>合計時間</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>2026-01</td>
+                <td>きょうへい先生</td>
+                <td>2</td>
+                <td>52.4%</td>
+                <td>18.5</td>
+                <td>112分</td>
+            </tr>
+            <tr>
+                <td>2026-01</td>
+                <td>あやこ先生</td>
+                <td>2</td>
+                <td>65.3%</td>
+                <td>12.0</td>
+                <td>98分</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h5>各列の意味</h5>
+    
+    <table>
+        <tr>
+            <th>カラム</th>
+            <th>説明</th>
+        </tr>
+        <tr>
+            <td><strong>月</strong></td>
+            <td>評価対象の月</td>
+        </tr>
+        <tr>
+            <td><strong>講師</strong></td>
+            <td>講師名</td>
+        </tr>
+        <tr>
+            <td><strong>レッスン数</strong></td>
+            <td>その月に評価したレッスン数</td>
+        </tr>
+        <tr>
+            <td><strong>平均発話比率</strong></td>
+            <td>講師が話している時間の割合<br>
+                🟢 60%以下: 良好<br>
+                🟡 60-70%: 普通<br>
+                🔴 70%以上: 要改善
+            </td>
+        </tr>
+        <tr>
+            <td><strong>平均沈黙回数</strong></td>
+            <td>15秒以上の沈黙が発生した回数<br>
+                少ないほど良い（目安: 20回以下）
+            </td>
+        </tr>
+        <tr>
+            <td><strong>合計時間</strong></td>
+            <td>評価した全レッスンの合計時間</td>
+        </tr>
+    </table>
+    
+    <div class="page-break"></div>
+    
+    <h4>3. レッスン詳細エリア</h4>
+    
+    <h5>レッスン選択</h5>
+    
+    <pre>┌─────────────────────────────────────────┐
+│ レッスンを選択:                          │
+│ [2026-01_山田太郎 ▼]                     │
+└─────────────────────────────────────────┘</pre>
+    
+    <div class="box">
+        <strong>使い方:</strong>
+        <ol>
+            <li>ドロップダウンをクリック</li>
+            <li>見たいレッスンを選択（形式: <code>月_生徒名</code>）</li>
+            <li>下に詳細が表示されます</li>
+        </ol>
+    </div>
+    
+    <h5>主要KPI</h5>
+    
+    <table>
+        <tr>
+            <th>指標</th>
+            <th>理想値</th>
+            <th>注意値</th>
+        </tr>
+        <tr>
+            <td><strong>講師発話比率</strong></td>
+            <td>50-60%</td>
+            <td>70%以上</td>
+        </tr>
+        <tr>
+            <td><strong>生徒発話比率</strong></td>
+            <td>40-50%</td>
+            <td>30%以下</td>
+        </tr>
+        <tr>
+            <td><strong>最長モノローグ</strong></td>
+            <td>3分以内</td>
+            <td>5分以上</td>
+        </tr>
+        <tr>
+            <td><strong>生徒ターン数</strong></td>
+            <td>多いほど良い</td>
+            <td>-</td>
+        </tr>
+    </table>
+    
+    <h5>感情シグナル</h5>
+    
+    <table>
+        <tr>
+            <th>シグナル</th>
+            <th>意味</th>
+        </tr>
+        <tr>
+            <td><strong>困惑</strong></td>
+            <td>生徒が理解できていない可能性</td>
+        </tr>
+        <tr>
+            <td><strong>ストレス</strong></td>
+            <td>生徒がプレッシャーを感じている</td>
+        </tr>
+        <tr>
+            <td><strong>ポジティブ</strong></td>
+            <td>生徒が楽しんでいる</td>
+        </tr>
+    </table>
+    
+    <p>各セクションには具体的なタイムスタンプ付きで、どの場面で発生したか表示されます。</p>
+    
+    <div class="page-break"></div>
+    
+    <h2 id="report">月次評価レポートの見方</h2>
+    
+    <h3>Google Sheets で確認する</h3>
+    
+    <div class="box info">
+        <strong>スプレッドシートURL:</strong><br>
+        <a href="https://docs.google.com/spreadsheets/d/1gFrIbkRxNcpKuT0vRNfaUdSrJWynlCdfqhGQz9vWwWo/edit" target="_blank">
+            https://docs.google.com/spreadsheets/d/1gFrIbkRxNcpKuT0vRNfaUdSrJWynlCdfqhGQz9vWwWo/edit
+        </a>
+    </div>
+    
+    <h4>シート構成</h4>
+    
+    <ol>
+        <li><strong>monthly_lessons</strong>: 各レッスンの詳細データ</li>
+        <li><strong>monthly_tutors</strong>: 講師ごとの月次サマリー</li>
+    </ol>
+    
+    <h4>monthly_lessons シート</h4>
+    
+    <p>各レッスンの詳細なKPIが記録されています。</p>
+    
+    <table>
+        <tr>
+            <th>カラム</th>
+            <th>説明</th>
+            <th>例</th>
+        </tr>
+        <tr>
+            <td>date_jst</td>
+            <td>評価対象の月</td>
+            <td>2026-01</td>
+        </tr>
+        <tr>
+            <td>tutor_name</td>
+            <td>講師名</td>
+            <td>きょうへい先生</td>
+        </tr>
+        <tr>
+            <td>file_name</td>
+            <td>動画ファイル名</td>
+            <td>WannaVレッスン予約 (山田太郎)...</td>
+        </tr>
+        <tr>
+            <td>duration_sec</td>
+            <td>レッスン時間（秒）</td>
+            <td>3367</td>
+        </tr>
+        <tr>
+            <td>talk_ratio_tutor</td>
+            <td>講師発話比率</td>
+            <td>0.524（52.4%）</td>
+        </tr>
+        <tr>
+            <td>status</td>
+            <td>処理ステータス</td>
+            <td>OK / ERROR</td>
+        </tr>
+    </table>
+    
+    <h4>monthly_tutors シート</h4>
+    
+    <p>講師ごとの月次サマリーが記録されています。</p>
+    
+    <table>
+        <tr>
+            <th>カラム</th>
+            <th>説明</th>
+        </tr>
+        <tr>
+            <td>date_jst</td>
+            <td>月（例: 2026-01）</td>
+        </tr>
+        <tr>
+            <td>tutor_name</td>
+            <td>講師名</td>
+        </tr>
+        <tr>
+            <td>lessons_count</td>
+            <td>評価したレッスン数（通常2件）</td>
+        </tr>
+        <tr>
+            <td>avg_tutor_talk_ratio</td>
+            <td>平均講師発話比率</td>
+        </tr>
+        <tr>
+            <td>avg_silence_15s_count</td>
+            <td>平均沈黙回数</td>
+        </tr>
+        <tr>
+            <td>total_duration_min</td>
+            <td>合計時間（分）</td>
+        </tr>
+    </table>
+    
+    <div class="box success">
+        <strong>確認のポイント:</strong>
+        <ol>
+            <li><code>lessons_count</code> が 2 になっているか</li>
+            <li><code>avg_tutor_talk_ratio</code> が 0.5-0.6（50-60%）の範囲内か</li>
+            <li><code>avg_silence_15s_count</code> が 20 以下か</li>
+        </ol>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <h2 id="faq">よくある質問</h2>
+    
+    <h3>Q1. データはいつ更新されますか？</h3>
+    
+    <div class="box info">
+        <p><strong>A:</strong> 毎月末日の23:00（日本時間）に自動実行され、翌朝にはダッシュボードで確認できます。</p>
+        <p><strong>例:</strong></p>
+        <ul>
+            <li>2026年1月31日 23:00: 1月のデータを自動評価</li>
+            <li>2026年2月1日 朝: ダッシュボードで結果確認可能</li>
+        </ul>
+    </div>
+    
+    <h3>Q2. なぜ全レッスンではなくランダム2件だけ？</h3>
+    
+    <div class="box">
+        <p><strong>A:</strong> 以下の理由があります：</p>
+        <ol>
+            <li><strong>コスト削減</strong>: 全レッスンを分析すると月間約1,050件で高コスト</li>
+            <li><strong>十分な信頼性</strong>: 統計的に2件あれば傾向は把握できる</li>
+            <li><strong>公平性</strong>: ランダム選択なので特定のレッスンに偏らない</li>
+        </ol>
+    </div>
+    
+    <h3>Q3. データが表示されない場合は？</h3>
+    
+    <div class="box warning">
+        <p><strong>チェックポイント:</strong></p>
+        <ol>
+            <li><strong>月次ジョブが実行されたか確認</strong>
+                <ul><li>Google Sheets で <code>monthly_lessons</code> シートにデータがあるか</li></ul>
+            </li>
+            <li><strong>講師フィルターを確認</strong>
+                <ul><li>「全講師」に戻してみる</li></ul>
+            </li>
+            <li><strong>ブラウザをリフレッシュ</strong>
+                <ul><li>F5キーまたは更新ボタンを押す</li></ul>
+            </li>
+            <li><strong>それでも表示されない場合</strong>
+                <ul><li>システム管理者に連絡してください</li></ul>
+            </li>
+        </ol>
+    </div>
+    
+    <h3>Q4. 講師発話比率の目安は？</h3>
+    
+    <div class="box success">
+        <p><strong>理想的な範囲:</strong> 50-60%</p>
+        <p><strong>評価基準:</strong></p>
+        <ul>
+            <li>🟢 <strong>40-60%</strong>: 優良（生徒が十分に話せている）</li>
+            <li>🟡 <strong>60-70%</strong>: 普通（改善の余地あり）</li>
+            <li>🔴 <strong>70%以上</strong>: 要改善（講師が話しすぎ）</li>
+            <li>🟡 <strong>40%未満</strong>: 普通（生徒が話しすぎ、または沈黙が多い）</li>
+        </ul>
+    </div>
+    
+    <h3>Q5. 感情シグナルの信頼性は？</h3>
+    
+    <div class="box">
+        <p><strong>A:</strong> AIによる推定値なので、参考程度にご利用ください。</p>
+        <p><strong>精度を上げるために:</strong></p>
+        <ul>
+            <li>タイムスタンプを確認して、実際の録画を見直す</li>
+            <li>複数レッスンの傾向を見る</li>
+            <li>生徒のフィードバックと照らし合わせる</li>
+        </ul>
+    </div>
+    
+    <h3>Q6. 改善アドバイスはどう活用する？</h3>
+    
+    <div class="box info">
+        <p><strong>推奨される使い方:</strong></p>
+        <ol>
+            <li><strong>個別フィードバック</strong>
+                <ul>
+                    <li>各講師に月次レポートとして共有</li>
+                    <li>具体的な改善点を一緒に確認</li>
+                </ul>
+            </li>
+            <li><strong>研修材料</strong>
+                <ul>
+                    <li>共通の課題を抽出</li>
+                    <li>グループ研修のテーマに</li>
+                </ul>
+            </li>
+            <li><strong>経過観察</strong>
+                <ul>
+                    <li>月ごとの推移を確認</li>
+                    <li>改善が見られたら褒める</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <h2>📞 サポート情報</h2>
+    
+    <table>
+        <tr>
+            <th>項目</th>
+            <th>URL</th>
+        </tr>
+        <tr>
+            <td><strong>ダッシュボード</strong></td>
+            <td><a href="https://speech-ratio-evaluation-ai.onrender.com" target="_blank">
+                https://speech-ratio-evaluation-ai.onrender.com
+            </a></td>
+        </tr>
+        <tr>
+            <td><strong>スプレッドシート</strong></td>
+            <td><a href="https://docs.google.com/spreadsheets/d/1gFrIbkRxNcpKuT0vRNfaUdSrJWynlCdfqhGQz9vWwWo/edit" target="_blank">
+                https://docs.google.com/spreadsheets/d/1gFrIbkRxNcpKuT0vRNfaUdSrJWynlCdfqhGQz9vWwWo/edit
+            </a></td>
+        </tr>
+    </table>
+    
+    <h2>📝 更新履歴</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>バージョン</th>
+                <th>日付</th>
+                <th>変更内容</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>3.0</td>
+                <td>2026-01-16</td>
+                <td>月次評価システムに移行</td>
+            </tr>
+            <tr>
+                <td>2.1</td>
+                <td>2025-12-15</td>
+                <td>並列処理・講師フィルター追加</td>
+            </tr>
+            <tr>
+                <td>2.0</td>
+                <td>2025-11-01</td>
+                <td>Gemini AI 統合・ダッシュボード追加</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p><strong>© 2026 WannaV レッスン分析システム</strong></p>
+        <p>このマニュアルは印刷用に最適化されています。<br>
+        ブラウザの「印刷」機能で「PDFとして保存」を選択してください。</p>
+    </div>
+    
+</body>
+</html>
