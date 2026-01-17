@@ -67,9 +67,9 @@ app.get('/api/monthly-summary', async (c) => {
       month: row[headers.indexOf('date_jst')], // 2026-01 format
       tutor_name: row[headers.indexOf('tutor_name')],
       lessons_count: parseInt(row[headers.indexOf('lessons_count')] || 0),
-      avg_tutor_talk_ratio: parseFloat(row[headers.indexOf('avg_tutor_talk_ratio')] || 0),
-      avg_silence_15s_count: parseFloat(row[headers.indexOf('avg_silence_15s_count')] || 0),
-      total_duration_min: parseFloat(row[headers.indexOf('total_duration_min')] || 0),
+      avg_talk_ratio: parseFloat(row[headers.indexOf('avg_talk_ratio_tutor')] || 0),
+      avg_monologue_sec: parseFloat(row[headers.indexOf('avg_max_tutor_monologue_sec')] || 0),
+      avg_confusion_ratio: parseFloat(row[headers.indexOf('avg_confusion_ratio_est')] || 0),
     }));
 
     return c.json({ success: true, data: summary });
@@ -267,9 +267,18 @@ app.get('/', (c) => {
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">月</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">講師</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">レッスン数</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均発話比率</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均沈黙回数</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">合計時間(分)</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="講師の発話時間 / 全体時間">
+                                            平均発話比率
+                                            <span class="text-xs text-gray-400 ml-1">ℹ️</span>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="講師が連続して話した最長時間（秒）">
+                                            平均モノローグ時間
+                                            <span class="text-xs text-gray-400 ml-1">ℹ️</span>
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="生徒が混乱している可能性の割合">
+                                            平均混乱率
+                                            <span class="text-xs text-gray-400 ml-1">ℹ️</span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody id="monthlySummaryTable" class="bg-white divide-y divide-gray-200">

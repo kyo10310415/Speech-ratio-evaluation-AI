@@ -246,8 +246,13 @@ function renderMonthlySummaryTable(data) {
 
   const rows = sortedData
     .map((item) => {
-      const talkRatioPercent = (item.avg_tutor_talk_ratio * 100).toFixed(1);
-      const ratioColor = item.avg_tutor_talk_ratio <= 0.6 ? 'text-green-600' : item.avg_tutor_talk_ratio <= 0.7 ? 'text-yellow-600' : 'text-red-600';
+      const talkRatioPercent = (item.avg_talk_ratio * 100).toFixed(1);
+      const ratioColor = item.avg_talk_ratio <= 0.6 ? 'text-green-600' : item.avg_talk_ratio <= 0.7 ? 'text-yellow-600' : 'text-red-600';
+      
+      const monologueColor = item.avg_monologue_sec <= 60 ? 'text-green-600' : item.avg_monologue_sec <= 120 ? 'text-yellow-600' : 'text-red-600';
+      
+      const confusionPercent = (item.avg_confusion_ratio * 100).toFixed(1);
+      const confusionColor = item.avg_confusion_ratio <= 0.2 ? 'text-green-600' : item.avg_confusion_ratio <= 0.4 ? 'text-yellow-600' : 'text-red-600';
 
       return `
       <tr>
@@ -263,11 +268,11 @@ function renderMonthlySummaryTable(data) {
         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${ratioColor}">
           ${talkRatioPercent}%
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-          ${item.avg_silence_15s_count.toFixed(1)}
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${monologueColor}">
+          ${item.avg_monologue_sec.toFixed(0)}秒
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-          ${item.total_duration_min.toFixed(0)}分
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${confusionColor}">
+          ${confusionPercent}%
         </td>
       </tr>
     `;
