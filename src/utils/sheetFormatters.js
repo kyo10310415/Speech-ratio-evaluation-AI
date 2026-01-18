@@ -187,8 +187,11 @@ export function aggregateMonthlyTutors(lessons, monthJst) {
   lessons.forEach(lesson => {
     const tutorName = lesson[1]; // tutor_name column
     const status = lesson[25]; // status column
+    const talkRatio = parseFloat(lesson[7] || 0);
 
-    if (status === 'ERROR') return; // Skip errors
+    // Skip errors and invalid data
+    if (status === 'ERROR') return;
+    if (talkRatio > 1.0 || talkRatio < 0) return; // Skip invalid talk ratios
 
     if (!tutorMap.has(tutorName)) {
       tutorMap.set(tutorName, {
