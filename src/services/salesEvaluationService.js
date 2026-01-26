@@ -119,6 +119,7 @@ class SalesEvaluationService {
       
       // Initialize services
       await audioService.initialize();
+      await geminiService.initialize();
 
       // Download video
       const videoPath = await driveService.downloadFile(videoFile.id, videoFile.name);
