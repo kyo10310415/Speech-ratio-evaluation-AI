@@ -6,11 +6,15 @@ import { config, validateConfig } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { sheetsService } from '../services/sheetsService.js';
 import { jobScheduler } from '../scheduler/jobScheduler.js';
+import { ssoAuthMiddleware } from '../middleware/sso-auth.js';
 
 const app = new Hono();
 
 // Enable CORS
 app.use('/api/*', cors());
+
+// SSO Authentication (protects all routes)
+app.use('*', ssoAuthMiddleware);
 
 // Serve static files
 app.use('/static/*', serveStatic({ root: './public' }));
