@@ -151,8 +151,14 @@ class SalesEvaluationService {
       // Generate report
       const report = await this.generateSalesReport(salesAnalysis, emotions);
 
-      // Cleanup
-      await audioService.cleanup(videoPath, audioPath);
+      // Cleanup temporary files
+      try {
+        const { unlink } = await import('fs/promises');
+        await unlink(videoPath).catch(err => logger.warn(`Failed to delete video: ${err.message}`));
+        await unlink(audioPath).catch(err => logger.warn(`Failed to delete audio: ${err.message}`));
+      } catch (cleanupError) {
+        logger.warn('Cleanup failed', cleanupError);
+      }
 
       return {
         subfolder: subfolder.name,
@@ -266,7 +272,11 @@ JSON形式で出力してください：
 `;
 
     try {
-      const response = await geminiService.generateContent(prompt);
+      // Use Gemini API to generate report
+      const model = geminiService.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const result = await model.generateContent(prompt);
+      const response = result.response.text();
+      
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const report = JSON.parse(jsonMatch[0]);
