@@ -21,6 +21,7 @@
     "monitor:errors": "node src/monitor-errors.js",
     "clear:errors": "node src/clear-error-rows.js",
     "test:auth": "node src/test-auth-detailed.js",
+    "fix:headers": "node fix-headers.js",
     "dev": "node --watch src/index.js",
     "dev:dashboard": "node --watch src/dashboard/server.js"
   },

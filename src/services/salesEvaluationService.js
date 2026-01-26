@@ -158,6 +158,12 @@ class SalesEvaluationService {
       // Analyze emotions (use original utterances with speaker_role)
       const emotions = await emotionAnalyzer.analyzeEmotionalSignals(utterances);
       
+      logger.info('Emotion analysis result:', {
+        confusionRatioEst: emotions.confusionRatioEst,
+        stressRatioEst: emotions.stressRatioEst,
+        positiveRatioEst: emotions.positiveRatioEst,
+      });
+      
       // Convert emotion keys to snake_case for sheet compatibility
       const emotionsFormatted = {
         confusion_ratio_est: emotions.confusionRatioEst || 0,
