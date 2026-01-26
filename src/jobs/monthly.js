@@ -14,6 +14,7 @@ import {
   MONTHLY_TUTORS_HEADERS,
   aggregateMonthlyTutors,
 } from '../utils/sheetFormatters.js';
+import { runSalesEvaluation } from './salesEvaluation.js';
 
 /**
  * Randomly select N items from array
@@ -172,6 +173,19 @@ export async function runMonthlyJob(testDate = null) {
       await sheetsService.writeHeaders('monthly_tutors', MONTHLY_TUTORS_HEADERS);
       await sheetsService.appendRows('monthly_tutors', tutorRows);
       logger.info(`Appended ${tutorRows.length} rows to monthly_tutors`);
+    }
+
+    // Run sales evaluation
+    logger.info('\n========================================');
+    logger.info('Starting sales evaluation...');
+    logger.info('========================================\n');
+    
+    try {
+      await runSalesEvaluation(monthStr);
+      logger.info('Sales evaluation completed successfully');
+    } catch (error) {
+      logger.error('Sales evaluation failed:', error);
+      // Don't throw - let lesson evaluation succeed even if sales fails
     }
 
     // Summary
