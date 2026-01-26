@@ -32,6 +32,7 @@ export const SALES_EVALUATIONS_HEADERS = [
   'improvements',
   'status',
   'error_message',
+  'person_name', // Y列: 担当者名
 ];
 
 /**
@@ -66,11 +67,14 @@ export async function runSalesEvaluation(monthStr) {
     for (let i = 1; i < salesFoldersData.length; i++) {
       const row = salesFoldersData[i];
       const folderUrl = row[1]; // B column
+      const personName = row[2]; // C column - 名前
       
-      if (folderUrl && folderUrl.trim() !== '') {
+      // Safely handle trim() - check if value is string
+      if (folderUrl && typeof folderUrl === 'string' && folderUrl.trim() !== '') {
         salesFolders.push({
           name: row[0] || `Folder ${i}`,
           url: folderUrl.trim(),
+          personName: typeof personName === 'string' ? personName.trim() : '', // 担当者名
         });
       }
     }
@@ -117,6 +121,7 @@ export async function runSalesEvaluation(monthStr) {
             const result = await salesEvaluationService.analyzeSalesCall({
               subfolder,
               parentFolderUrl: folder.url,
+              personName: folder.personName, // 担当者名を追加
               videoFile: selectedVideo,
               monthStr,
             });
@@ -133,6 +138,7 @@ export async function runSalesEvaluation(monthStr) {
             const errorResult = {
               subfolder: subfolder.name,
               parentFolderUrl: folder.url,
+              personName: folder.personName, // 担当者名を追加
               monthStr,
               error: error.message,
               success: false,
@@ -200,6 +206,7 @@ function formatSalesEvaluationRow(result) {
       '', // improvements
       'ERROR',
       result.error || 'Unknown error',
+      result.personName || '', // person_name
     ];
   }
 
@@ -230,5 +237,6 @@ function formatSalesEvaluationRow(result) {
     Array.isArray(report.improvements) ? report.improvements.join('\n') : '',
     'OK',
     '',
+    result.personName || '', // person_name
   ];
 }

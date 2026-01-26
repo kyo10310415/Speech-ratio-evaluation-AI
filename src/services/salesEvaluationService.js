@@ -110,6 +110,7 @@ class SalesEvaluationService {
     const {
       subfolder,
       parentFolderUrl,
+      personName, // 担当者名を追加
       videoFile,
       monthStr,
     } = params;
@@ -182,6 +183,7 @@ class SalesEvaluationService {
       return {
         subfolder: subfolder.name,
         parentFolderUrl,
+        personName,
         fileId: videoFile.id,
         fileName: videoFile.name,
         createdTime: videoFile.createdTime,
@@ -198,6 +200,7 @@ class SalesEvaluationService {
       return {
         subfolder: subfolder.name,
         parentFolderUrl,
+        personName,
         fileId: videoFile.id,
         fileName: videoFile.name,
         createdTime: videoFile.createdTime,
@@ -315,15 +318,52 @@ JSON形式で出力してください：
       const result = await model.generateContent(prompt);
       const response = result.response.text();
       
+      // Extract JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const report = JSON.parse(jsonMatch[0]);
-        return report;
+        try {
+          const report = JSON.parse(jsonMatch[0]);
+          
+          // Validate report structure
+          const validReport = {
+            listening: typeof report.listening === 'string' ? report.listening : '',
+            questioning: typeof report.questioning === 'string' ? report.questioning : '',
+            explanation: typeof report.explanation === 'string' ? report.explanation : '',
+            customer_experience: typeof report.customer_experience === 'string' ? report.customer_experience : '',
+            improvements: Array.isArray(report.improvements) 
+              ? report.improvements.filter(item => typeof item === 'string')
+              : [],
+          };
+          
+          return validReport;
+        } catch (parseError) {
+          logger.error('Failed to parse report JSON', parseError);
+          return {
+            listening: 'レポート生成中にエラーが発生しました',
+            questioning: '',
+            explanation: '',
+            customer_experience: '',
+            improvements: [],
+          };
+        }
       }
-      return { error: 'Failed to parse report' };
+      
+      return {
+        listening: 'JSONレスポンスが見つかりませんでした',
+        questioning: '',
+        explanation: '',
+        customer_experience: '',
+        improvements: [],
+      };
     } catch (error) {
       logger.error('Failed to generate sales report', error);
-      return { error: error.message };
+      return {
+        listening: `エラー: ${error.message}`,
+        questioning: '',
+        explanation: '',
+        customer_experience: '',
+        improvements: [],
+      };
     }
   }
 }
