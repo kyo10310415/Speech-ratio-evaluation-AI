@@ -17,6 +17,9 @@ async function loadSalesSummary() {
 
     salesData = data;
 
+    // Render summary stats
+    renderSummaryStats(data);
+
     // Render charts
     renderTalkRatioChart(data);
     renderQuestionsChart(data);
@@ -28,6 +31,108 @@ async function loadSalesSummary() {
     populateCallSelector(data);
   } catch (error) {
     console.error('Failed to load sales summary:', error);
+  }
+}
+
+// Render summary statistics
+function renderSummaryStats(data) {
+  // Group by person_name
+  const byPerson = {};
+  const byCategory = {};
+  
+  data.forEach(item => {
+    const person = item.person_name || '未設定';
+    const category = item.subfolder_name;
+    
+    // By person
+    if (!byPerson[person]) {
+      byPerson[person] = {
+        count: 0,
+        totalTalkRatio: 0,
+        totalQuestions: 0,
+        totalMonologue: 0,
+        totalConfusion: 0,
+      };
+    }
+    byPerson[person].count++;
+    byPerson[person].totalTalkRatio += item.talk_ratio_sales;
+    byPerson[person].totalQuestions += item.questions_asked;
+    byPerson[person].totalMonologue += item.max_sales_monologue_sec;
+    byPerson[person].totalConfusion += item.confusion_ratio;
+    
+    // By category
+    if (!byCategory[category]) {
+      byCategory[category] = {
+        count: 0,
+        totalTalkRatio: 0,
+        totalQuestions: 0,
+        totalMonologue: 0,
+        totalConfusion: 0,
+      };
+    }
+    byCategory[category].count++;
+    byCategory[category].totalTalkRatio += item.talk_ratio_sales;
+    byCategory[category].totalQuestions += item.questions_asked;
+    byCategory[category].totalMonologue += item.max_sales_monologue_sec;
+    byCategory[category].totalConfusion += item.confusion_ratio;
+  });
+  
+  // Render person summary
+  const personSummary = document.getElementById('personSummary');
+  if (personSummary) {
+    const personRows = Object.entries(byPerson).map(([person, stats]) => {
+      const avgTalkRatio = (stats.totalTalkRatio / stats.count * 100).toFixed(1);
+      const avgQuestions = (stats.totalQuestions / stats.count).toFixed(1);
+      const avgMonologue = (stats.totalMonologue / stats.count).toFixed(0);
+      const avgConfusion = (stats.totalConfusion / stats.count * 100).toFixed(1);
+      
+      const talkRatioColor = 
+        avgTalkRatio >= 40 && avgTalkRatio <= 50 ? 'text-green-600' :
+        avgTalkRatio >= 30 && avgTalkRatio < 40 ? 'text-yellow-600' :
+        avgTalkRatio > 50 && avgTalkRatio <= 60 ? 'text-yellow-600' : 'text-red-600';
+      
+      return `
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${person}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${stats.count}件</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${talkRatioColor}">${avgTalkRatio}%</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgQuestions}回</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgMonologue}秒</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgConfusion}%</td>
+        </tr>
+      `;
+    }).join('');
+    
+    personSummary.innerHTML = personRows;
+  }
+  
+  // Render category summary
+  const categorySummary = document.getElementById('categorySummary');
+  if (categorySummary) {
+    const categoryRows = Object.entries(byCategory).map(([category, stats]) => {
+      const avgTalkRatio = (stats.totalTalkRatio / stats.count * 100).toFixed(1);
+      const avgQuestions = (stats.totalQuestions / stats.count).toFixed(1);
+      const avgMonologue = (stats.totalMonologue / stats.count).toFixed(0);
+      const avgConfusion = (stats.totalConfusion / stats.count * 100).toFixed(1);
+      
+      const talkRatioColor = 
+        avgTalkRatio >= 40 && avgTalkRatio <= 50 ? 'text-green-600' :
+        avgTalkRatio >= 30 && avgTalkRatio < 40 ? 'text-yellow-600' :
+        avgTalkRatio > 50 && avgTalkRatio <= 60 ? 'text-yellow-600' : 'text-red-600';
+      
+      return `
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${category}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${stats.count}件</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${talkRatioColor}">${avgTalkRatio}%</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgQuestions}回</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgMonologue}秒</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${avgConfusion}%</td>
+        </tr>
+      `;
+    }).join('');
+    
+    categorySummary.innerHTML = categoryRows;
   }
 }
 

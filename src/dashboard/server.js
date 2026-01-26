@@ -471,6 +471,57 @@ app.get('/sales', (c) => {
                             </table>
                         </div>
                     </div>
+                    
+                    <!-- Summary Statistics Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        <!-- By Person Summary -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                                <h3 class="text-lg font-semibold text-blue-900">👤 担当者別総評</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">担当者</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">評価数</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均発話比率</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均質問回数</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均モノローグ</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均混乱率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="personSummary" class="bg-white divide-y divide-gray-200">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- By Category Summary -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+                                <h3 class="text-lg font-semibold text-green-900">📂 カテゴリ別総評</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">評価数</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均発話比率</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均質問回数</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均モノローグ</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">平均混乱率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="categorySummary" class="bg-white divide-y divide-gray-200">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Call Detail Section -->
