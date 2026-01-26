@@ -156,9 +156,19 @@ class SalesEvaluationService {
 
       // Analyze emotions (use original utterances with speaker_role)
       const emotions = await emotionAnalyzer.analyzeEmotionalSignals(utterances);
+      
+      // Convert emotion keys to snake_case for sheet compatibility
+      const emotionsFormatted = {
+        confusion_ratio_est: emotions.confusionRatioEst || 0,
+        stress_ratio_est: emotions.stressRatioEst || 0,
+        positive_ratio_est: emotions.positiveRatioEst || 0,
+        confusion_top3: emotions.confusionTop3 || '',
+        stress_top3: emotions.stressTop3 || '',
+        positive_top3: emotions.positiveTop3 || '',
+      };
 
       // Generate report
-      const report = await this.generateSalesReport(salesAnalysis, emotions);
+      const report = await this.generateSalesReport(salesAnalysis, emotionsFormatted);
 
       // Cleanup temporary files
       try {
@@ -177,7 +187,7 @@ class SalesEvaluationService {
         createdTime: videoFile.createdTime,
         duration,
         ...salesAnalysis,
-        ...emotions,
+        ...emotionsFormatted,
         report,
         monthStr,
         success: true,
@@ -247,7 +257,7 @@ class SalesEvaluationService {
    */
   async generateSalesReport(salesAnalysis, emotions) {
     const prompt = `
-あなたはセールストレーニングの専門家です。以下の営業通話の分析結果に基づいて、改善アドバイスを生成してください。
+あなたはセールストレーニングの専門家です。以下の営業通話の分析結果に基づいて、詳細な改善アドバイスを生成してください。
 
 ## 分析データ
 - 営業担当者の発話比率: ${(salesAnalysis.talk_ratio_sales * 100).toFixed(1)}%
@@ -262,13 +272,32 @@ class SalesEvaluationService {
 - ポジティブシグナル: ${(emotions.positive_ratio_est * 100).toFixed(1)}%
 
 ## 出力形式
-以下の項目について、簡潔に（各100文字以内で）アドバイスしてください：
+以下の項目について、具体的かつ実践的なアドバイスを生成してください（各項目200-300文字）：
 
-1. 傾聴力: 顧客の話を聞く姿勢について
-2. 質問力: ヒアリングの質と量について
-3. 説明力: 説明のわかりやすさと長さについ
-4. 顧客体験: 顧客が感じたと思われる印象について
-5. 改善提案: 最も重要な改善ポイント3つ
+1. **傾聴力**: 
+   - 現状の課題を具体的に指摘
+   - 理想的な傾聴の姿勢とは何か
+   - 実践的な改善方法（例：顧客の発話比率を〇〇%にするための具体策）
+
+2. **質問力**: 
+   - 現在の質問回数と質の評価
+   - 効果的な質問の種類と使い分け（オープン/クローズド質問）
+   - 顧客のニーズを引き出すための質問テクニック
+
+3. **説明力**: 
+   - 現在のモノローグ時間の問題点
+   - 簡潔でわかりやすい説明のコツ
+   - 顧客の理解度を確認しながら進める方法
+
+4. **顧客体験**: 
+   - 顧客が感じたと思われる感情（混乱/ストレス/満足度）
+   - この通話で顧客が得られた価値
+   - 顧客満足度を高めるための具体的施策
+
+5. **改善提案**: 
+   - 最も重要な改善ポイント3つ（優先順位付き）
+   - それぞれの改善ポイントに対する具体的なアクションプラン
+   - 成果を測定するKPI
 
 JSON形式で出力してください：
 {
@@ -276,7 +305,7 @@ JSON形式で出力してください：
   "questioning": "...",
   "explanation": "...",
   "customer_experience": "...",
-  "improvements": ["...", "...", "..."]
+  "improvements": ["1. ...", "2. ...", "3. ..."]
 }
 `;
 
