@@ -77,6 +77,10 @@ export async function runSalesEvaluation(monthStr) {
 
     logger.info(`Found ${salesFolders.length} sales folders to evaluate`);
 
+    // Ensure sales_evaluations sheet exists
+    await sheetsService.getOrCreateSheet('sales_evaluations');
+    await sheetsService.writeHeaders('sales_evaluations', SALES_EVALUATIONS_HEADERS);
+
     // Process each sales folder
     const allResults = [];
     
@@ -119,15 +123,26 @@ export async function runSalesEvaluation(monthStr) {
             
             allResults.push(result);
             
+            // Write result to sheet immediately
+            const sheetRow = formatSalesEvaluationRow(result);
+            await sheetsService.appendRows('sales_evaluations', [sheetRow]);
+            logger.info(`✅ Wrote result to sheet: ${subfolder.name} - ${result.success ? 'SUCCESS' : 'FAILED'}`);
+            
           } catch (error) {
             logger.error(`Failed to process subfolder ${subfolder.name}`, error);
-            allResults.push({
+            const errorResult = {
               subfolder: subfolder.name,
               parentFolderUrl: folder.url,
               monthStr,
               error: error.message,
               success: false,
-            });
+            };
+            allResults.push(errorResult);
+            
+            // Write error result to sheet immediately
+            const sheetRow = formatSalesEvaluationRow(errorResult);
+            await sheetsService.appendRows('sales_evaluations', [sheetRow]);
+            logger.info(`❌ Wrote error to sheet: ${subfolder.name}`);
           }
         }
         
@@ -136,20 +151,7 @@ export async function runSalesEvaluation(monthStr) {
       }
     }
 
-    // Format results for sheet
-    const sheetRows = allResults.map(result => formatSalesEvaluationRow(result));
-    
-    // Ensure sales_evaluations sheet exists
-    await sheetsService.getOrCreateSheet('sales_evaluations');
-    await sheetsService.writeHeaders('sales_evaluations', SALES_EVALUATIONS_HEADERS);
-    
-    // Append results
-    if (sheetRows.length > 0) {
-      await sheetsService.appendRows('sales_evaluations', sheetRows);
-      logger.info(`Appended ${sheetRows.length} rows to sales_evaluations sheet`);
-    }
-
-    // Summary
+    // Summary (no need to write again, already written incrementally)
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     const successCount = allResults.filter(r => r.success).length;
     const failCount = allResults.filter(r => !r.success).length;
