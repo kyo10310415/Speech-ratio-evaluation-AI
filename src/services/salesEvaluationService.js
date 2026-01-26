@@ -141,11 +141,20 @@ class SalesEvaluationService {
       }
 
       logger.info(`Transcribed ${utterances.length} utterances`);
+      
+      // Convert speaker_role to speaker (for compatibility with sales analysis)
+      // Assumption: First speaker is Sales, second speaker is Customer
+      const convertedUtterances = utterances.map(u => ({
+        ...u,
+        speaker: u.speaker_role === 'Tutor' ? 'A' : 'B', // Tutor=Sales(A), Student=Customer(B)
+        start: u.start_ms / 1000, // Convert ms to seconds
+        end: u.end_ms / 1000,
+      }));
 
       // Analyze sales performance
-      const salesAnalysis = await this.analyzeSalesPerformance(utterances, duration);
+      const salesAnalysis = await this.analyzeSalesPerformance(convertedUtterances, duration);
 
-      // Analyze emotions
+      // Analyze emotions (use original utterances with speaker_role)
       const emotions = await emotionAnalyzer.analyzeEmotionalSignals(utterances);
 
       // Generate report
