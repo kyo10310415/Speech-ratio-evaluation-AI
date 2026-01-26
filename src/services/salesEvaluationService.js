@@ -29,6 +29,8 @@ class SalesEvaluationService {
         q: query,
         fields: 'files(id, name, createdTime)',
         orderBy: 'name',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
       });
 
       const folders = response.data.files || [];
@@ -72,6 +74,8 @@ class SalesEvaluationService {
         q: query,
         fields: 'files(id, name, createdTime, size, mimeType)',
         orderBy: 'createdTime desc',
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
       });
 
       const videos = response.data.files || [];
