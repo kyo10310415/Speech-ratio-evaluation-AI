@@ -97,29 +97,50 @@ app.get('/api/sales-summary', async (c) => {
 
     const headers = data[0];
     const rows = data.slice(1);
+    
+    // Debug: Log header indices
+    logger.info('Sales Summary Headers:', {
+      person_name_index: headers.indexOf('person_name'),
+      confusion_ratio_index: headers.indexOf('confusion_ratio_est'),
+      total_headers: headers.length,
+    });
 
     const summary = rows
       .filter((row) => row[headers.indexOf('status')] === 'OK') // Filter out errors
-      .map((row) => ({
-        month: row[headers.indexOf('month')],
-        subfolder_name: row[headers.indexOf('subfolder_name')],
-        person_name: row[headers.indexOf('person_name')] || '', // Y列: 担当者名
-        file_id: row[headers.indexOf('file_id')],
-        file_name: row[headers.indexOf('file_name')],
-        duration_sec: parseInt(row[headers.indexOf('duration_sec')] || 0),
-        talk_ratio_sales: parseFloat(row[headers.indexOf('talk_ratio_sales')] || 0),
-        talk_ratio_customer: parseFloat(row[headers.indexOf('talk_ratio_customer')] || 0),
-        questions_asked: parseInt(row[headers.indexOf('questions_asked')] || 0),
-        max_sales_monologue_sec: parseInt(row[headers.indexOf('max_sales_monologue_sec')] || 0),
-        confusion_ratio: parseFloat(row[headers.indexOf('confusion_ratio_est')] || 0),
-        stress_ratio: parseFloat(row[headers.indexOf('stress_ratio_est')] || 0),
-        positive_ratio: parseFloat(row[headers.indexOf('positive_ratio_est')] || 0),
-        listening_advice: row[headers.indexOf('listening_advice')],
-        questioning_advice: row[headers.indexOf('questioning_advice')],
-        explanation_advice: row[headers.indexOf('explanation_advice')],
-        customer_experience: row[headers.indexOf('customer_experience')],
-        improvements: row[headers.indexOf('improvements')],
-      }));
+      .map((row) => {
+        const personNameIdx = headers.indexOf('person_name');
+        const confusionIdx = headers.indexOf('confusion_ratio_est');
+        
+        // Debug: Log first row data
+        if (summary.length === 0) {
+          logger.info('First row sample:', {
+            person_name: row[personNameIdx],
+            confusion_ratio_est: row[confusionIdx],
+            subfolder: row[headers.indexOf('subfolder_name')],
+          });
+        }
+        
+        return {
+          month: row[headers.indexOf('month')],
+          subfolder_name: row[headers.indexOf('subfolder_name')],
+          person_name: row[personNameIdx] || '', // Y列: 担当者名
+          file_id: row[headers.indexOf('file_id')],
+          file_name: row[headers.indexOf('file_name')],
+          duration_sec: parseInt(row[headers.indexOf('duration_sec')] || 0),
+          talk_ratio_sales: parseFloat(row[headers.indexOf('talk_ratio_sales')] || 0),
+          talk_ratio_customer: parseFloat(row[headers.indexOf('talk_ratio_customer')] || 0),
+          questions_asked: parseInt(row[headers.indexOf('questions_asked')] || 0),
+          max_sales_monologue_sec: parseInt(row[headers.indexOf('max_sales_monologue_sec')] || 0),
+          confusion_ratio: parseFloat(row[confusionIdx] || 0),
+          stress_ratio: parseFloat(row[headers.indexOf('stress_ratio_est')] || 0),
+          positive_ratio: parseFloat(row[headers.indexOf('positive_ratio_est')] || 0),
+          listening_advice: row[headers.indexOf('listening_advice')],
+          questioning_advice: row[headers.indexOf('questioning_advice')],
+          explanation_advice: row[headers.indexOf('explanation_advice')],
+          customer_experience: row[headers.indexOf('customer_experience')],
+          improvements: row[headers.indexOf('improvements')],
+        };
+      });
 
     return c.json({ success: true, data: summary });
   } catch (error) {
