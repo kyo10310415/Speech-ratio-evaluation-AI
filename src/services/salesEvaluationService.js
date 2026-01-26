@@ -116,14 +116,21 @@ class SalesEvaluationService {
 
     try {
       logger.info(`Analyzing sales call: ${videoFile.name}`);
+      
+      // Initialize services
+      await audioService.initialize();
 
       // Download video
       const videoPath = await driveService.downloadFile(videoFile.id, videoFile.name);
       logger.info(`Downloaded video: ${videoPath}`);
 
-      // Extract and normalize audio
-      const { audioPath, duration } = await audioService.extractAndNormalizeAudio(videoPath);
-      logger.info(`Extracted audio: ${audioPath}, duration: ${duration}s`);
+      // Extract audio
+      const audioPath = await audioService.extractAudio(videoPath, videoFile.id);
+      logger.info(`Extracted audio: ${audioPath}`);
+      
+      // Get audio duration
+      const duration = await audioService.getAudioDuration(audioPath);
+      logger.info(`Audio duration: ${duration}s`);
 
       // Transcribe audio
       const { utterances } = await transcriptionService.transcribeAndDiarize(audioPath, duration);
