@@ -99,6 +99,7 @@ app.get('/api/sales-summary', async (c) => {
       .map((row) => ({
         month: row[headers.indexOf('month')],
         subfolder_name: row[headers.indexOf('subfolder_name')],
+        person_name: row[headers.indexOf('person_name')] || '', // Y列: 担当者名
         file_id: row[headers.indexOf('file_id')],
         file_name: row[headers.indexOf('file_name')],
         duration_sec: parseInt(row[headers.indexOf('duration_sec')] || 0),
@@ -440,6 +441,7 @@ app.get('/sales', (c) => {
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">月</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">担当者</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="営業担当者の発話比率（理想は40-50%）">
                                             発話比率
