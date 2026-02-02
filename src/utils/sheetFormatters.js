@@ -55,9 +55,11 @@ export const MONTHLY_TUTORS_HEADERS = [
   'date_jst',
   'tutor_name',
   'lessons_count',
-  'avg_tutor_talk_ratio',
-  'avg_silence_15s_count',
-  'total_duration_min',
+  'avg_talk_ratio_tutor',
+  'avg_max_tutor_monologue_sec',
+  'avg_confusion_ratio_est',
+  'avg_stress_ratio_est',
+  'alerts',
 ];
 
 /**
@@ -211,17 +213,26 @@ export function aggregateMonthlyTutors(lessons, monthJst) {
 
     // Calculate averages
     const avgTalkRatio = data.lessons.reduce((sum, l) => sum + parseFloat(l[7] || 0), 0) / lessonsCount;
-    const avgSilence15s = data.lessons.reduce((sum, l) => sum + parseInt(l[14] || 0), 0) / lessonsCount;
-    const totalDurationSec = data.lessons.reduce((sum, l) => sum + parseInt(l[6] || 0), 0);
-    const totalDurationMin = totalDurationSec / 60;
+    const avgMaxMonologue = data.lessons.reduce((sum, l) => sum + parseInt(l[10] || 0), 0) / lessonsCount;
+    const avgConfusionRatio = data.lessons.reduce((sum, l) => sum + parseFloat(l[17] || 0), 0) / lessonsCount;
+    const avgStressRatio = data.lessons.reduce((sum, l) => sum + parseFloat(l[18] || 0), 0) / lessonsCount;
+
+    // Generate alerts
+    const alerts = [];
+    if (avgTalkRatio > 0.6) alerts.push('発話比率高');
+    if (avgMaxMonologue > 180) alerts.push('モノローグ長');
+    if (avgConfusionRatio > 0.4) alerts.push('混乱多');
+    if (avgStressRatio > 0.4) alerts.push('ストレス多');
 
     rows.push([
       monthJst,
       tutorName,
       lessonsCount,
       parseFloat(avgTalkRatio.toFixed(3)),
-      parseFloat(avgSilence15s.toFixed(1)),
-      parseFloat(totalDurationMin.toFixed(1)),
+      parseFloat(avgMaxMonologue.toFixed(1)),
+      parseFloat(avgConfusionRatio.toFixed(3)),
+      parseFloat(avgStressRatio.toFixed(3)),
+      alerts.join(', '),
     ]);
   });
 

@@ -34,13 +34,17 @@ function randomSelect(array, count) {
 /**
  * Monthly job: Process random 2 lessons per tutor from current month
  * @param {string} testDate - Optional date string (YYYY-MM-DD) for testing (uses that month)
+ * @param {string} specificTutor - Optional tutor name to process only that tutor
  */
-export async function runMonthlyJob(testDate = null) {
+export async function runMonthlyJob(testDate = null, specificTutor = null) {
   const startTime = Date.now();
   logger.info('========================================');
   logger.info('Starting MONTHLY JOB');
   if (testDate) {
     logger.info(`TEST MODE: Processing month containing ${testDate}`);
+  }
+  if (specificTutor) {
+    logger.info(`SPECIFIC TUTOR MODE: Only processing ${specificTutor}`);
   }
   logger.info('========================================');
 
@@ -63,7 +67,18 @@ export async function runMonthlyJob(testDate = null) {
     logger.info('All services initialized');
 
     // Read input sheet
-    const tutorRecords = await sheetsService.readInputSheet();
+    let tutorRecords = await sheetsService.readInputSheet();
+    
+    // Filter by specific tutor if provided
+    if (specificTutor) {
+      tutorRecords = tutorRecords.filter(r => r.tutorName === specificTutor);
+      if (tutorRecords.length === 0) {
+        logger.error(`Tutor not found: ${specificTutor}`);
+        logger.info('Available tutors:', (await sheetsService.readInputSheet()).map(r => r.tutorName).join(', '));
+        return;
+      }
+    }
+    
     logger.info(`Found ${tutorRecords.length} tutor records`);
 
     if (tutorRecords.length === 0) {
@@ -205,8 +220,9 @@ export async function runMonthlyJob(testDate = null) {
 // If executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const testDate = process.argv[2]; // Optional: 'YYYY-MM-DD'
+  const specificTutor = process.argv[3]; // Optional: tutor name
   
-  executeWithLock('monthly-job', () => runMonthlyJob(testDate))
+  executeWithLock('monthly-job', () => runMonthlyJob(testDate, specificTutor))
     .then(() => {
       logger.info('Monthly job finished');
       process.exit(0);
