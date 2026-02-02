@@ -105,27 +105,29 @@ app.get('/api/sales-summary', async (c) => {
       total_headers: headers.length,
     });
 
-    const summary = rows
-      .filter((row) => row[headers.indexOf('status')] === 'OK') // Filter out errors
-      .map((row) => {
+    const okRows = rows.filter((row) => row[headers.indexOf('status')] === 'OK');
+    
+    // Debug: Log first row data
+    if (okRows.length > 0) {
+      const firstRow = okRows[0];
+      logger.info('First OK row sample:', {
+        month: firstRow[headers.indexOf('month')],
+        subfolder: firstRow[headers.indexOf('subfolder_name')],
+        person_name: firstRow[headers.indexOf('person_name')],
+        status: firstRow[headers.indexOf('status')],
+      });
+    }
+    
+    const summary = okRows.map((row) => {
         const personNameIdx = headers.indexOf('person_name');
         const confusionIdx = headers.indexOf('confusion_ratio_est');
         
-        // Debug: Log first row data
-        if (summary.length === 0) {
-          logger.info('First row sample:', {
-            person_name: row[personNameIdx],
-            confusion_ratio_est: row[confusionIdx],
-            subfolder: row[headers.indexOf('subfolder_name')],
-          });
-        }
-        
         return {
-          month: row[headers.indexOf('month')],
-          subfolder_name: row[headers.indexOf('subfolder_name')],
+          month: row[headers.indexOf('month')] || '',
+          subfolder_name: row[headers.indexOf('subfolder_name')] || '',
           person_name: row[personNameIdx] || '', // Y列: 担当者名
-          file_id: row[headers.indexOf('file_id')],
-          file_name: row[headers.indexOf('file_name')],
+          file_id: row[headers.indexOf('file_id')] || '',
+          file_name: row[headers.indexOf('file_name')] || '',
           duration_sec: parseInt(row[headers.indexOf('duration_sec')] || 0),
           talk_ratio_sales: parseFloat(row[headers.indexOf('talk_ratio_sales')] || 0),
           talk_ratio_customer: parseFloat(row[headers.indexOf('talk_ratio_customer')] || 0),
@@ -134,11 +136,11 @@ app.get('/api/sales-summary', async (c) => {
           confusion_ratio: parseFloat(row[confusionIdx] || 0),
           stress_ratio: parseFloat(row[headers.indexOf('stress_ratio_est')] || 0),
           positive_ratio: parseFloat(row[headers.indexOf('positive_ratio_est')] || 0),
-          listening_advice: row[headers.indexOf('listening_advice')],
-          questioning_advice: row[headers.indexOf('questioning_advice')],
-          explanation_advice: row[headers.indexOf('explanation_advice')],
-          customer_experience: row[headers.indexOf('customer_experience')],
-          improvements: row[headers.indexOf('improvements')],
+          listening_advice: row[headers.indexOf('listening_advice')] || '',
+          questioning_advice: row[headers.indexOf('questioning_advice')] || '',
+          explanation_advice: row[headers.indexOf('explanation_advice')] || '',
+          customer_experience: row[headers.indexOf('customer_experience')] || '',
+          improvements: row[headers.indexOf('improvements')] || '',
         };
       });
 
