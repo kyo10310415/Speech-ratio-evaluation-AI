@@ -25,12 +25,12 @@ app.get('/manual.html', serveStatic({ path: './public/manual.html' }));
 // API Routes
 
 /**
- * Get list of tutors from 新フォルダURL sheet
+ * Get list of tutors from コピー先URL sheet
  */
 app.get('/api/tutors', async (c) => {
   try {
     await sheetsService.initialize();
-    const data = await sheetsService.getSheetData('新フォルダURL');
+    const data = await sheetsService.getSheetData('コピー先URL');
 
     if (data.length <= 1) {
       return c.json({ success: true, data: [] });
@@ -205,6 +205,50 @@ app.get('/api/lessons', async (c) => {
 });
 
 /**
+ * Run monthly evaluation for specific tutor
+ * POST /api/run-monthly-evaluation
+ * Body: { month: 'YYYY-MM', tutorName: '講師名' }
+ */
+app.post('/api/run-monthly-evaluation', async (c) => {
+  try {
+    const { month, tutorName } = await c.req.json();
+    
+    if (!month || !tutorName) {
+      return c.json({ 
+        success: false, 
+        error: 'month and tutorName are required' 
+      }, 400);
+    }
+    
+    logger.info(`Starting monthly evaluation: ${month} - ${tutorName}`);
+    
+    // Import runMonthlyJob dynamically
+    const { runMonthlyJob } = await import('../jobs/monthly.js');
+    
+    // Run in background (don't wait for completion)
+    const testDate = `${month}-15`; // Use middle of the month
+    
+    // Execute the job asynchronously
+    runMonthlyJob(testDate, tutorName)
+      .then(() => {
+        logger.info(`Monthly evaluation completed: ${month} - ${tutorName}`);
+      })
+      .catch((error) => {
+        logger.error(`Monthly evaluation failed: ${month} - ${tutorName}`, error);
+      });
+    
+    return c.json({ 
+      success: true, 
+      message: `月次評価を開始しました: ${month} - ${tutorName}`,
+      status: 'running'
+    });
+  } catch (error) {
+    logger.error('Failed to start monthly evaluation', error);
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+/**
  * Get lesson detail by file_id
  */
 app.get('/api/lessons/:fileId', async (c) => {
@@ -315,6 +359,40 @@ app.get('/', (c) => {
                         <select id="tutorSelector" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <option value="">全講師</option>
                         </select>
+                    </div>
+                </div>
+                
+                <!-- Monthly Evaluation Runner Section -->
+                <div class="mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">🚀 月次評価を実行</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    評価月
+                                </label>
+                                <select id="evaluationMonth" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    講師を選択
+                                </label>
+                                <select id="evaluationTutor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">講師を選択...</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button id="runEvaluationBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    評価を実行
+                                </button>
+                            </div>
+                        </div>
+                        <div id="evaluationStatus" class="mt-4 hidden">
+                            <!-- Status messages -->
+                        </div>
                     </div>
                 </div>
                 

@@ -15,6 +15,12 @@ async function initDashboard() {
 
     // Load lessons for dropdown
     await loadLessons();
+    
+    // Populate evaluation month dropdown
+    await populateEvaluationMonths();
+    
+    // Populate evaluation tutor dropdown
+    await populateEvaluationTutors();
 
     // Setup event listeners
     setupEventListeners();
@@ -498,6 +504,125 @@ function setupEventListeners() {
       document.getElementById('lessonDetail').classList.add('hidden');
     }
   });
+  
+  // Monthly evaluation runner
+  const runEvaluationBtn = document.getElementById('runEvaluationBtn');
+  if (runEvaluationBtn) {
+    runEvaluationBtn.addEventListener('click', runMonthlyEvaluation);
+  }
+}
+
+// Populate evaluation month dropdown
+async function populateEvaluationMonths() {
+  const monthSelector = document.getElementById('evaluationMonth');
+  if (!monthSelector) return;
+  
+  const now = new Date();
+  const months = [];
+  
+  // Generate last 12 months
+  for (let i = 0; i < 12; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const label = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    months.push({ value: monthStr, label });
+  }
+  
+  monthSelector.innerHTML = months.map(m => 
+    `<option value="${m.value}">${m.label}</option>`
+  ).join('');
+}
+
+// Populate evaluation tutor dropdown
+async function populateEvaluationTutors() {
+  try {
+    const response = await axios.get('/api/tutors');
+    const { data } = response.data;
+
+    const selector = document.getElementById('evaluationTutor');
+    if (!selector) return;
+
+    const options = data.map(
+      (tutorName) => `<option value="${tutorName}">${tutorName}</option>`
+    );
+
+    selector.innerHTML = '<option value="">講師を選択...</option>' + options.join('');
+  } catch (error) {
+    console.error('Failed to load tutors for evaluation:', error);
+  }
+}
+
+// Run monthly evaluation
+async function runMonthlyEvaluation() {
+  const monthSelector = document.getElementById('evaluationMonth');
+  const tutorSelector = document.getElementById('evaluationTutor');
+  const statusDiv = document.getElementById('evaluationStatus');
+  const runBtn = document.getElementById('runEvaluationBtn');
+  
+  const month = monthSelector.value;
+  const tutorName = tutorSelector.value;
+  
+  if (!tutorName) {
+    alert('講師を選択してください');
+    return;
+  }
+  
+  // Disable button
+  runBtn.disabled = true;
+  runBtn.textContent = '実行中...';
+  
+  // Show status
+  statusDiv.classList.remove('hidden');
+  statusDiv.innerHTML = `
+    <div class="flex items-center space-x-2 text-blue-600">
+      <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>月次評価を実行中: ${month} - ${tutorName}</span>
+    </div>
+  `;
+  
+  try {
+    const response = await axios.post('/api/run-monthly-evaluation', {
+      month,
+      tutorName
+    });
+    
+    if (response.data.success) {
+      statusDiv.innerHTML = `
+        <div class="flex items-center space-x-2 text-green-600">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span>${response.data.message}</span>
+        </div>
+        <p class="text-sm text-gray-600 mt-2">処理が完了するまで数分かかります。完了後、ページをリロードしてデータを確認してください。</p>
+      `;
+      
+      // Re-enable button after 3 seconds
+      setTimeout(() => {
+        runBtn.disabled = false;
+        runBtn.textContent = '評価を実行';
+      }, 3000);
+    } else {
+      throw new Error(response.data.error || 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Failed to run monthly evaluation:', error);
+    statusDiv.innerHTML = `
+      <div class="flex items-center space-x-2 text-red-600">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        <span>評価の実行に失敗しました: ${error.message}</span>
+      </div>
+    `;
+    
+    // Re-enable button
+    runBtn.disabled = false;
+    runBtn.textContent = '評価を実行';
+  }
 }
 
 // Initialize on page load
