@@ -58,12 +58,15 @@ async function loadTutors() {
 // Load monthly summary data
 async function loadMonthlySummary() {
   try {
+    console.log('Loading monthly summary, selected tutor:', selectedTutor);
     const response = await axios.get('/api/monthly-summary');
     let { data } = response.data;
+    console.log('Monthly summary data fetched:', data.length, 'records');
 
     // Filter by selected tutor if applicable
     if (selectedTutor) {
       data = data.filter(item => item.tutor_name === selectedTutor);
+      console.log('After filtering by tutor:', data.length, 'records');
     }
 
     if (data.length === 0) {
@@ -298,14 +301,17 @@ function renderMonthlySummaryTable(data) {
 // Load lessons for dropdown
 async function loadLessons() {
   try {
+    console.log('Loading lessons, selected tutor:', selectedTutor);
     // Build URL with tutor filter if selected
     let url = '/api/lessons';
     if (selectedTutor) {
       url += `?tutor=${encodeURIComponent(selectedTutor)}`;
+      console.log('Requesting lessons with tutor filter:', url);
     }
 
     const response = await axios.get(url);
     const { data } = response.data;
+    console.log('Lessons data fetched:', data.length, 'lessons');
 
     const selector = document.getElementById('lessonSelector');
 
@@ -502,9 +508,17 @@ function setupEventListeners() {
     console.log('Tutor selector changed:', e.target.value);
     selectedTutor = e.target.value;
     
+    // Show loading indicator
+    const monthlySummaryTable = document.getElementById('monthlySummaryTable');
+    if (monthlySummaryTable) {
+      monthlySummaryTable.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500"><div class="flex items-center justify-center"><svg class="animate-spin h-5 w-5 mr-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>読み込み中...</div></td></tr>';
+    }
+    
     // Reload data with new filter
     await loadMonthlySummary();
     await loadLessons();
+    
+    console.log('Tutor filter applied:', selectedTutor || '全講師');
   });
 
   // Lesson selector
