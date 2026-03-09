@@ -33,16 +33,23 @@ async function initDashboard() {
 // Load tutors list
 async function loadTutors() {
   try {
+    console.log('Loading tutors list...');
     const response = await axios.get('/api/tutors');
+    console.log('Tutors API response:', response.data);
     const { data } = response.data;
 
     const selector = document.getElementById('tutorSelector');
+    if (!selector) {
+      console.error('tutorSelector not found in DOM!');
+      return;
+    }
 
     const options = data.map(
       (tutorName) => `<option value="${tutorName}">${tutorName}</option>`
     );
 
     selector.innerHTML = '<option value="">全講師</option>' + options.join('');
+    console.log('Tutors loaded successfully:', data.length, 'tutors');
   } catch (error) {
     console.error('Failed to load tutors:', error);
   }
@@ -485,7 +492,14 @@ async function loadLessonDetail(fileId) {
 function setupEventListeners() {
   // Tutor selector
   const tutorSelector = document.getElementById('tutorSelector');
+  if (!tutorSelector) {
+    console.error('tutorSelector element not found!');
+    return;
+  }
+  
+  console.log('Setting up tutorSelector event listener');
   tutorSelector.addEventListener('change', async (e) => {
+    console.log('Tutor selector changed:', e.target.value);
     selectedTutor = e.target.value;
     
     // Reload data with new filter
@@ -495,20 +509,29 @@ function setupEventListeners() {
 
   // Lesson selector
   const lessonSelector = document.getElementById('lessonSelector');
-  lessonSelector.addEventListener('change', (e) => {
-    const fileId = e.target.value;
+  if (!lessonSelector) {
+    console.error('lessonSelector element not found!');
+  } else {
+    console.log('Setting up lessonSelector event listener');
+    lessonSelector.addEventListener('change', (e) => {
+      console.log('Lesson selector changed:', e.target.value);
+      const fileId = e.target.value;
 
-    if (fileId) {
-      loadLessonDetail(fileId);
-    } else {
-      document.getElementById('lessonDetail').classList.add('hidden');
-    }
-  });
+      if (fileId) {
+        loadLessonDetail(fileId);
+      } else {
+        document.getElementById('lessonDetail').classList.add('hidden');
+      }
+    });
+  }
   
   // Monthly evaluation runner
   const runEvaluationBtn = document.getElementById('runEvaluationBtn');
   if (runEvaluationBtn) {
+    console.log('Setting up runEvaluationBtn event listener');
     runEvaluationBtn.addEventListener('click', runMonthlyEvaluation);
+  } else {
+    console.error('runEvaluationBtn element not found!');
   }
 }
 
