@@ -24,7 +24,8 @@
     "test:auth": "node src/test-auth-detailed.js",
     "fix:headers": "node fix-headers.js",
     "dev": "node --watch src/index.js",
-    "dev:dashboard": "node --watch src/dashboard/server.js"
+    "dev:dashboard": "node --watch src/dashboard/server.js",
+    "test:security": "node --test tests/sso-security.test.js"
   },
   "keywords": [
     "lesson-analysis",

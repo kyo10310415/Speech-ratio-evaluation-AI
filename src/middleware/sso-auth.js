@@ -11,9 +11,10 @@
 
 import jwt from 'jsonwebtoken';
 import { getCookie, setCookie } from 'hono/cookie';
+import { readJwtSecret } from './sso-config.js';
 
 // WannaV Dashboardと同じJWT_SECRETを使用
-const JWT_SECRET = process.env.JWT_SECRET || 'wannav-secret-key-change-in-production';
+const JWT_SECRET = readJwtSecret();
 const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://wannav-main.onrender.com';
 
 export async function ssoAuthMiddleware(c, next) {
@@ -31,7 +32,7 @@ export async function ssoAuthMiddleware(c, next) {
 
   try {
     // トークンを検証
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     
     // SSOトークンかチェック
     if (decoded.type !== 'sso') {
@@ -39,7 +40,7 @@ export async function ssoAuthMiddleware(c, next) {
       return c.redirect(DASHBOARD_URL);
     }
 
-    console.log(`✅ SSO 認証成功: ${decoded.username} (${decoded.role})`);
+    console.log('✅ SSO 認証成功');
 
     // ユーザー情報をコンテキストに追加
     c.set('user', {
@@ -66,7 +67,7 @@ export async function ssoAuthMiddleware(c, next) {
 
     await next();
   } catch (error) {
-    console.error('❌ SSO トークン検証エラー:', error.message);
+    console.error('❌ SSO トークン検証エラー');
     
     // トークンが期限切れの場合、Cookieをクリア
     setCookie(c, 'wannav_sso', '', {
