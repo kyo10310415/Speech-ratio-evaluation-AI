@@ -427,3 +427,9 @@ MIT
 ダッシュボードの起動前に`JWT_SECRET`をWannaV-mainと同じ32文字以上の十分にランダムな鍵へ設定してください。未設定・短い鍵・公開サンプル鍵は起動を拒否し、HS256以外の署名を受け付けません。`.env.example`の空欄を本番へそのまま配備しないでください。既存の安全な共有鍵は不要に交換しません。過去に公開既定鍵を使用した場合は、SSOの発行側と全受信側を調整して鍵を交換し、既存セッションを失効させて再ログインします。秘密値はソース・ログ・チャットへ記載しません。
 
 `npm run test:security`で、鍵未設定の起動拒否・旧既定鍵署名拒否・正規HS256署名成功・期限切れと異なるアルゴリズム拒否を外部接続なしで検証します。issuer/audienceの新規導入とSSOロールの変更はこの差分に含めず、既存の発行側との契約を保持しています。実Google/Sheets/本番SSOの検証は別途必要です。
+
+### 2026-10-25 第12バッチ依存更新
+
+Hono/Node adapter、Axios/form-dataとテスト用依存の互換patchを既存manifest範囲内でlock更新。認証・API・業務コード・DBスキーマ・環境設定は変更しません。Node22.23.4でinstall scripts無効のclean install、4テスト、差分チェック成功。HTTP adapterの保護付き静的配信・エンコードされたパス・JSON処理は架空fixtureで検証。
+
+稼働用audit: Critical0/High0/Moderate5/Low0。全依存audit: Critical0/High0/Moderate5/Low1。警告件数と実際の攻撃成立は別に評価します。test:securityでSSOとHTTP adapterを検証。実録画・音声解析・AI・Google通信・ジョブは未試験。
