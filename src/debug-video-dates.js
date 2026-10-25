@@ -1,65 +1,45 @@
+import { pathToFileURL } from 'node:url';
 import { driveService } from './services/driveService.js';
-import { config } from './config/env.js';
 
-/**
- * Debug script to check actual video file creation dates
- */
-async function debugVideoDates() {
-  console.log('=== Video Date Debug ===\n');
-  
-  // Initialize Drive service
+// Read-only diagnostic. Never print file names, IDs, provider responses or errors.
+export async function debugVideoDates() {
+  const folderId = process.env.VIDEO_DATE_DEBUG_FOLDER_ID;
+  const month = process.env.VIDEO_DATE_DEBUG_MONTH || '2026-01';
+  if (!folderId || !/^[A-Za-z0-9_-]+$/.test(folderId) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+    throw new Error('Diagnostic target configuration is required');
+  }
   await driveService.initialize();
-  
-  // きょうへい先生のフォルダID
-  const folderId = '1OuyVHjShDKkrnZUR5IY--Qaa9DPVm3Sb';
-  
-  console.log(`Checking folder: ${folderId}\n`);
-  
-  // Get all subfolders
-  const subfolders = await driveService.listMonthFolders(folderId);
-  console.log(`Found ${subfolders.length} month folders:`);
-  subfolders.forEach(f => console.log(`  - ${f.name} (${f.id})`));
-  
-  // Check 2026-01 folder
-  const jan2026 = subfolders.find(f => f.name === '2026-01');
-  if (!jan2026) {
-    console.log('\n❌ 2026-01 folder not found');
-    return;
-  }
-  
-  console.log(`\n=== Checking files in 2026-01 folder ===`);
-  
-  // List all files with metadata
-  const files = await driveService.drive.files.list({
-    q: `'${jan2026.id}' in parents and trashed=false and (mimeType='video/mp4' or mimeType='video/quicktime')`,
-    fields: 'files(id, name, createdTime, size, mimeType)',
-    orderBy: 'createdTime desc',
+  const folders = await driveService.drive.files.list({
+    q: `'${folderId}' in parents and name='${month}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id)', pageSize: 2,
   });
-  
-  if (!files.data.files || files.data.files.length === 0) {
-    console.log('No video files found');
-    return;
-  }
-  
-  console.log(`Found ${files.data.files.length} video files:\n`);
-  
-  files.data.files.forEach(file => {
-    const createdTime = new Date(file.createdTime);
-    const jstTime = new Date(createdTime.getTime() + 9 * 60 * 60 * 1000); // Convert to JST
-    
-    console.log(`File: ${file.name}`);
-    console.log(`  ID: ${file.id}`);
-    console.log(`  Created (UTC): ${createdTime.toISOString()}`);
-    console.log(`  Created (JST): ${jstTime.toISOString().replace('T', ' ').substring(0, 19)}`);
-    console.log(`  Size: ${Math.round(file.size / 1024 / 1024)} MB`);
-    console.log(`  Type: ${file.mimeType}`);
-    console.log('');
-  });
-  
-  console.log('=== Date Range for 2026-01-04 Test ===');
-  console.log('Start: 2026-01-03T15:00:00.000Z (JST: 2026-01-04 00:00:00)');
-  console.log('End:   2026-01-04T14:59:59.000Z (JST: 2026-01-04 23:59:59)');
-  console.log('\n✅ Debug completed');
+  const target = folders.data.files?.[0];
+  if (!target) { console.log('対象月フォルダが見つかりません'); return; }
+  let total = 0, invalidDates = 0, differentDates = 0, pageToken;
+  do {
+    const result = await driveService.drive.files.list({
+      q: `'${target.id}' in parents and trashed=false and (mimeType='video/mp4' or mimeType='video/quicktime')`,
+      fields: 'nextPageToken, files(createdTime)', orderBy: 'createdTime desc', pageSize: 1000, pageToken,
+    });
+    for (const file of result.data.files || []) {
+      total++;
+      const date = new Date(file.createdTime || '');
+      if (!Number.isFinite(date.getTime())) { invalidDates++; continue; }
+      const utcDay = date.toISOString().slice(0, 10);
+      const jstDay = new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      if (utcDay !== jstDay) differentDates++;
+    }
+    pageToken = result.data.nextPageToken;
+  } while (pageToken);
+  console.log(`動画件数: ${total}`);
+  console.log(`作成日時が不明な件数: ${invalidDates}`);
+  console.log(`UTCとJSTで日付が異なる件数: ${differentDates}`);
 }
 
-debugVideoDates().catch(console.error);
+export async function runVideoDateDiagnostic() {
+  try { await debugVideoDates(); return true; }
+  catch { console.error('動画日付の確認に失敗しました。対象設定とアクセス権を確認してください。'); return false; }
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runVideoDateDiagnostic().then(success => { if (!success) process.exitCode = 1; });
+}
