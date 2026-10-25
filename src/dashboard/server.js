@@ -48,7 +48,7 @@ app.get('/api/tutors', async (c) => {
     return c.json({ success: true, data: uniqueTutors });
   } catch (error) {
     logger.error('Failed to get tutors list', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 
@@ -79,7 +79,7 @@ app.get('/api/monthly-summary', async (c) => {
     return c.json({ success: true, data: summary });
   } catch (error) {
     logger.error('Failed to get monthly summary', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 
@@ -147,7 +147,7 @@ app.get('/api/sales-summary', async (c) => {
     return c.json({ success: true, data: summary });
   } catch (error) {
     logger.error('Failed to get sales summary', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 
@@ -200,7 +200,7 @@ app.get('/api/lessons', async (c) => {
     return c.json({ success: true, data: lessons });
   } catch (error) {
     logger.error('Failed to get lessons', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 
@@ -234,7 +234,7 @@ app.post('/api/run-monthly-evaluation', async (c) => {
         logger.info(`Monthly evaluation completed: ${month} - ${tutorName}`);
       })
       .catch((error) => {
-        logger.error(`Monthly evaluation failed: ${month} - ${tutorName}`, error);
+        logger.error('Monthly evaluation failed');
       });
     
     return c.json({ 
@@ -244,7 +244,7 @@ app.post('/api/run-monthly-evaluation', async (c) => {
     });
   } catch (error) {
     logger.error('Failed to start monthly evaluation', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 
@@ -306,7 +306,7 @@ app.get('/api/lessons/:fileId', async (c) => {
     return c.json({ success: true, data: lesson });
   } catch (error) {
     logger.error('Failed to get lesson detail', error);
-    return c.json({ success: false, error: error.message }, 500);
+    return c.json({ success: false, error: '処理に失敗しました。管理者にお問い合わせください。' }, 500);
   }
 });
 

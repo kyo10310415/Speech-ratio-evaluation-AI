@@ -3,13 +3,12 @@ import { config } from '../config/env.js';
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.printf(({ timestamp, level, message, stack }) => {
-    return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+  winston.format.printf(({ timestamp, level, message }) => {
+    return `${timestamp} [${level.toUpperCase()}]: ${typeof message === 'string' ? message : 'Log event details omitted'}`;
   })
 );
 
-export const logger = winston.createLogger({
+const internalLogger = winston.createLogger({
   level: config.logLevel,
   format: logFormat,
   transports: [
@@ -36,3 +35,15 @@ try {
 } catch (err) {
   // Directory already exists
 }
+
+// Drop SDK exceptions and arbitrary metadata before Winston can merge them into
+// message/stack (including credentials in request config and response bodies).
+// Callers must use fixed event text rather than interpolating exception details.
+export function withPrivateErrors(target) {
+  return Object.fromEntries(['error', 'warn', 'info', 'debug', 'verbose', 'silly'].map(level => [
+    level,
+    (message) => target[level](typeof message === 'string' ? message : 'Log event details omitted')
+  ]));
+}
+
+export const logger = withPrivateErrors(internalLogger);

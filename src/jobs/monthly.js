@@ -73,7 +73,7 @@ export async function runMonthlyJob(testDate = null, specificTutor = null) {
     if (specificTutor) {
       tutorRecords = tutorRecords.filter(r => r.tutorName === specificTutor);
       if (tutorRecords.length === 0) {
-        logger.error(`Tutor not found: ${specificTutor}`);
+        logger.error('Tutor not found');
         logger.info('Available tutors:', (await sheetsService.readInputSheet()).map(r => r.tutorName).join(', '));
         return;
       }
@@ -152,7 +152,7 @@ export async function runMonthlyJob(testDate = null, specificTutor = null) {
 
             processedRows.push(...rows);
           } catch (error) {
-            logger.error(`Failed to process video ${videoInfo.fileName}:`, error);
+            logger.error('Failed to process video');
           }
         }
 
@@ -168,7 +168,7 @@ export async function runMonthlyJob(testDate = null, specificTutor = null) {
     if (errors.length > 0) {
       logger.error(`Encountered ${errors.length} errors during processing:`);
       errors.forEach(({ tutorName, error }) => {
-        logger.error(`  - ${tutorName}: ${error.message}`);
+        logger.error('Tutor processing failed');
       });
     }
 

@@ -64,7 +64,7 @@ export async function processInParallel(items, processor, concurrency = 5) {
   logger.info(`Parallel processing complete: ${results.length} succeeded, ${errors.length} failed`);
   
   if (errors.length > 0) {
-    logger.warn(`Failed items: ${errors.map(e => e.item.tutorName || e.item).join(', ')}`);
+    logger.warn('Failed items');
   }
   
   return { results, errors };

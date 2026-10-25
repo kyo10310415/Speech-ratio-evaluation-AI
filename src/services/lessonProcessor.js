@@ -78,7 +78,7 @@ export async function processLesson({
     return { row, success: true };
 
   } catch (error) {
-    logger.error(`Failed to process lesson: ${fileName}`, error);
+    logger.error('Failed to process lesson');
 
     // Cleanup temp files
     cleanup(videoPath, audioPath);
@@ -109,7 +109,7 @@ function cleanup(...paths) {
         unlinkSync(path);
         logger.debug(`Cleaned up: ${path}`);
       } catch (err) {
-        logger.warn(`Failed to cleanup ${path}:`, err.message);
+        logger.warn('Failed to cleanup');
       }
     }
   }
@@ -152,7 +152,7 @@ export async function processTutorFolder({
     if (specificFileId) {
       targetFiles = files.filter(f => f.id === specificFileId);
       if (targetFiles.length === 0) {
-        logger.warn(`Specific file ${specificFileId} not found`);
+        logger.warn('Specific file not found');
         return rows;
       }
     }
@@ -193,7 +193,7 @@ export async function processTutorFolder({
     return rows;
 
   } catch (error) {
-    logger.error(`Failed to process folder for ${tutorName}`, error);
+    logger.error('Failed to process tutor folder');
 
     // Return error row for folder access failure
     const errorRow = formatErrorRow({

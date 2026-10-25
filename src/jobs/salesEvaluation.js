@@ -134,7 +134,7 @@ export async function runSalesEvaluation(monthStr) {
             logger.info(`✅ Wrote result to sheet: ${subfolder.name} - ${result.success ? 'SUCCESS' : 'FAILED'}`);
             
           } catch (error) {
-            logger.error(`Failed to process subfolder ${subfolder.name}`, error);
+            logger.error('Failed to process subfolder');
             const errorResult = {
               subfolder: subfolder.name,
               parentFolderUrl: folder.url,
@@ -153,7 +153,7 @@ export async function runSalesEvaluation(monthStr) {
         }
         
       } catch (error) {
-        logger.error(`Failed to process folder ${folder.name}`, error);
+        logger.error('Failed to process folder');
       }
     }
 

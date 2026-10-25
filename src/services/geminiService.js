@@ -131,7 +131,7 @@ class GeminiService {
             try {
               await this.fileManager.deleteFile(uploadedFileName);
             } catch (err) {
-              logger.warn(`Failed to delete uploaded file from Gemini: ${err.message}`);
+              logger.warn('Failed to delete uploaded file from Gemini');
             }
           }
 

@@ -101,7 +101,7 @@ export async function runDailyJob(testDate = null) {
     if (errors.length > 0) {
       logger.error(`Failed to process ${errors.length} tutors:`);
       errors.forEach(({ item, error }) => {
-        logger.error(`  - ${item.tutorName}: ${error.message}`);
+        logger.error('Tutor processing failed');
       });
     }
 
