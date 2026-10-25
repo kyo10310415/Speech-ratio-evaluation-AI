@@ -140,7 +140,7 @@ export async function runSalesEvaluation(monthStr) {
               parentFolderUrl: folder.url,
               personName: folder.personName, // 担当者名を追加
               monthStr,
-              error: error.message,
+              error: 'Sales subfolder processing failed',
               success: false,
             };
             allResults.push(errorResult);
