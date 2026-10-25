@@ -25,7 +25,7 @@
     "fix:headers": "node fix-headers.js",
     "dev": "node --watch src/index.js",
     "dev:dashboard": "node --watch src/dashboard/server.js",
-    "test:security": "node --test tests/sso-security.test.js tests/dependency-http.test.js"
+    "test:security": "node --test tests/sso-security.test.js tests/dependency-http.test.js tests/google-client.test.js"
   },
   "keywords": [
     "lesson-analysis",
@@ -43,7 +43,7 @@
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.7",
     "fluent-ffmpeg": "^2.1.3",
-    "googleapis": "^131.0.0",
+    "googleapis": "150.0.1",
     "hono": "^4.0.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.2.1",

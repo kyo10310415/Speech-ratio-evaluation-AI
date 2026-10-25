@@ -437,3 +437,9 @@ Hono/Node adapter、Axios/form-dataとテスト用依存の互換patchを既存m
 ## qs互換更新（2026-10-25）
 
 推移依存qsを6.16.1へ更新しました。manifest・アプリソース・認証・ジョブ・環境変数は変更しません。Node22.23.4でclean install(ignore-scripts)、4セキュリティテスト、dashboard構文確認成功。本番依存auditはCritical/High0、Moderate5→4（Google/uuid関連が残存）。実Google通信・AI分析・通知・本番ジョブは実行していません。
+
+## Google APIクライアントの互換性検証
+
+googleapisは検証済みの150.0.1に固定しています。認証スコープ・環境変数・ジョブ設定は変更していません。
+
+npm run test:security はSSO・HTTP境界に加え、実際のSheets/DriveサービスとGoogleクライアントを使い、HTTP transportを模擬して読取り・RAW書込み・シート作成・エラー処理を検証します。実キー、外部API、AI、実データは使用しません。実Google認証や本番データの操作確認は別途必要です。
