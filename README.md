@@ -433,3 +433,7 @@ MIT
 Hono/Node adapter、Axios/form-dataとテスト用依存の互換patchを既存manifest範囲内でlock更新。認証・API・業務コード・DBスキーマ・環境設定は変更しません。Node22.23.4でinstall scripts無効のclean install、4テスト、差分チェック成功。HTTP adapterの保護付き静的配信・エンコードされたパス・JSON処理は架空fixtureで検証。
 
 稼働用audit: Critical0/High0/Moderate5/Low0。全依存audit: Critical0/High0/Moderate5/Low1。警告件数と実際の攻撃成立は別に評価します。test:securityでSSOとHTTP adapterを検証。実録画・音声解析・AI・Google通信・ジョブは未試験。
+
+## qs互換更新（2026-10-25）
+
+推移依存qsを6.16.1へ更新しました。manifest・アプリソース・認証・ジョブ・環境変数は変更しません。Node22.23.4でclean install(ignore-scripts)、4セキュリティテスト、dashboard構文確認成功。本番依存auditはCritical/High0、Moderate5→4（Google/uuid関連が残存）。実Google通信・AI分析・通知・本番ジョブは実行していません。
