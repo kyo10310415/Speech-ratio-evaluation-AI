@@ -25,7 +25,7 @@
     "fix:headers": "node fix-headers.js",
     "dev": "node --watch src/index.js",
     "dev:dashboard": "node --watch src/dashboard/server.js",
-    "test:security": "node --test tests/sso-security.test.js tests/dependency-http.test.js tests/google-client.test.js tests/log-privacy.test.js"
+    "test:security": "node --test tests/sso-security.test.js tests/dependency-http.test.js tests/google-client.test.js tests/log-privacy.test.js tests/error-records.test.js"
   },
   "keywords": [
     "lesson-analysis",

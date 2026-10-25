@@ -211,7 +211,7 @@ class SalesEvaluationService {
         fileName: videoFile.name,
         createdTime: videoFile.createdTime,
         monthStr,
-        error: error.message,
+        error: 'Sales call analysis failed',
         success: false,
       };
     }
@@ -364,7 +364,7 @@ JSON形式で出力してください：
     } catch (error) {
       logger.error('Failed to generate sales report', error);
       return {
-        listening: `エラー: ${error.message}`,
+        listening: 'レポート生成中にエラーが発生しました',
         questioning: '',
         explanation: '',
         customer_experience: '',

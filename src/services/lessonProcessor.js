@@ -91,7 +91,7 @@ export async function processLesson({
       fileId,
       fileName,
       createdTime,
-      errorMessage: error.message || 'Unknown error',
+      errorMessage: 'Lesson processing failed',
     });
 
     return { row: errorRow, success: false };
@@ -200,7 +200,7 @@ export async function processTutorFolder({
       dateJst,
       tutorName,
       folderUrl,
-      errorMessage: `Folder access error: ${error.message}`,
+      errorMessage: 'Folder access failed',
     });
 
     return [errorRow];
