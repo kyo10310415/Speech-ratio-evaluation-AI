@@ -58,9 +58,8 @@ async function testAuth() {
       logger.info(`      Name: ${folderMeta.data.name}`);
       logger.info(`      Type: ${folderMeta.data.mimeType}`);
     } catch (metaError) {
-      logger.error(`   ❌ Failed to get folder metadata: ${metaError.message}`);
-      logger.error(`      Error code: ${metaError.code}`);
-      logger.error(`      Error details: ${JSON.stringify(metaError.errors || {})}`);
+      logger.error('   ❌ Failed to get folder metadata');
+
     }
     
     // Then, try to list files
@@ -85,17 +84,15 @@ async function testAuth() {
         });
       }
     } catch (listError) {
-      logger.error(`   ❌ Failed to list files: ${listError.message}`);
-      logger.error(`      Error code: ${listError.code}`);
-      logger.error(`      Error details: ${JSON.stringify(listError.errors || {})}`);
+      logger.error('   ❌ Failed to list files');
+
     }
     
     logger.info('\n=== TEST COMPLETE ===');
     
   } catch (error) {
     logger.error('\n=== TEST FAILED ===');
-    logger.error(`Error: ${error.message}`);
-    logger.error(`Stack: ${error.stack}`);
+
     throw error;
   }
 }

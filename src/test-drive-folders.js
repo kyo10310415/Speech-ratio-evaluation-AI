@@ -42,7 +42,7 @@ async function testListFolders() {
       if (normalized) {
         logger.info(`  ✅ ${folder.name} → ${normalized}`);
       } else {
-        logger.warn(`  ❌ ${folder.name} → NOT A MONTH FOLDER`);
+        logger.warn('  ❌ → NOT A MONTH FOLDER');
       }
     });
     

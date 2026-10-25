@@ -42,7 +42,7 @@ class SalesEvaluationService {
         createdTime: f.createdTime,
       }));
     } catch (error) {
-      logger.error(`Failed to list subfolders in ${parentFolderId}`, error);
+      logger.error('Failed to list subfolders');
       throw error;
     }
   }
@@ -83,7 +83,7 @@ class SalesEvaluationService {
       
       return videos;
     } catch (error) {
-      logger.error(`Failed to list videos in ${folderId}`, error);
+      logger.error('Failed to list videos');
       throw error;
     }
   }
@@ -180,8 +180,8 @@ class SalesEvaluationService {
       // Cleanup temporary files
       try {
         const { unlink } = await import('fs/promises');
-        await unlink(videoPath).catch(err => logger.warn(`Failed to delete video: ${err.message}`));
-        await unlink(audioPath).catch(err => logger.warn(`Failed to delete audio: ${err.message}`));
+        await unlink(videoPath).catch(err => logger.warn('Failed to delete video'));
+        await unlink(audioPath).catch(err => logger.warn('Failed to delete audio'));
       } catch (cleanupError) {
         logger.warn('Cleanup failed', cleanupError);
       }
@@ -201,7 +201,7 @@ class SalesEvaluationService {
         success: true,
       };
     } catch (error) {
-      logger.error(`Failed to analyze sales call: ${videoFile.name}`, error);
+      logger.error('Failed to analyze sales call');
       
       return {
         subfolder: subfolder.name,

@@ -92,7 +92,7 @@ class DriveService {
       }
       return monthFolders;
     } catch (error) {
-      logger.error(`Failed to list month folders in ${parentFolderId}`, error);
+      logger.error('Failed to list month folders');
       throw error;
     }
   }
@@ -137,7 +137,7 @@ class DriveService {
       const monthFolders = await this.listMonthFolders(parentFolderId);
       
       if (monthFolders.length === 0) {
-        logger.warn(`No month subfolders found in ${parentFolderId}`);
+        logger.warn('No month subfolders found');
         return [];
       }
 
@@ -167,7 +167,7 @@ class DriveService {
       logger.info(`Total ${allVideos.length} video files found across all month folders`);
       return allVideos;
     } catch (error) {
-      logger.error(`Failed to list videos in folder ${parentFolderId}`, error);
+      logger.error('Failed to list videos in folder');
       throw error;
     }
   }
@@ -237,7 +237,7 @@ class DriveService {
       logger.info(`${filteredFiles.length} files match date range in this subfolder`);
       return filteredFiles;
     } catch (error) {
-      logger.error(`Failed to list videos in subfolder ${folderId}`, error);
+      logger.error('Failed to list videos in subfolder');
       throw error;
     }
   }
@@ -306,7 +306,7 @@ class DriveService {
 
         dest.on('error', (err) => {
           hasError = true;
-          logger.error(`Error writing file ${fileName}`, err);
+          logger.error('Error writing file');
           reject(err);
         });
 
@@ -319,13 +319,13 @@ class DriveService {
           })
           .on('error', err => {
             hasError = true;
-            logger.error(`Error downloading ${fileName}`, err);
+            logger.error('File download failed');
             reject(err);
           })
           .pipe(dest);
       });
     } catch (error) {
-      logger.error(`Failed to download file ${fileId}`, error);
+      logger.error('Failed to download file');
       throw error;
     }
   }
@@ -344,7 +344,7 @@ class DriveService {
 
       return response.data;
     } catch (error) {
-      logger.error(`Failed to get metadata for file ${fileId}`, error);
+      logger.error('Failed to get metadata for file');
       throw error;
     }
   }

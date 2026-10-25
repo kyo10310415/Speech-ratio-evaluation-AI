@@ -42,8 +42,8 @@ async function testFolderAccess() {
       logger.info(`   Can list children: ${folderMeta.data.capabilities?.canListChildren}`);
       
     } catch (error) {
-      logger.error(`❌ Cannot access folder: ${error.message}`);
-      logger.error(`   Error code: ${error.code}`);
+      logger.error('❌ Cannot access folder');
+      logger.error('Authentication diagnostic details omitted');
       
       if (error.code === 404) {
         logger.error('   → Folder not found OR service account has no permission');
@@ -70,7 +70,7 @@ async function testFolderAccess() {
       }
       
     } catch (error) {
-      logger.error(`\n❌ Cannot list folder contents: ${error.message}`);
+      logger.error('\n❌ Cannot list folder contents');
     }
     
   } catch (error) {

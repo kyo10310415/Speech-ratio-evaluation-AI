@@ -47,7 +47,7 @@ class AudioService {
           resolve(audioPath);
         })
         .on('error', err => {
-          logger.error(`Failed to extract audio from ${videoPath}`, err);
+          logger.error('Failed to extract audio');
           reject(err);
         })
         .run();
@@ -201,7 +201,7 @@ class AudioService {
         await unlink(chunk.path);
         logger.debug(`Deleted chunk: ${chunk.path}`);
       } catch (err) {
-        logger.warn(`Failed to delete chunk ${chunk.path}:`, err.message);
+        logger.warn('Failed to delete chunk');
       }
     }
   }
@@ -221,7 +221,7 @@ class AudioService {
       
       // Delete video file immediately after extraction to free memory
       logger.info(`Deleting video file to free memory: ${videoPath}`);
-      await unlink(videoPath).catch(err => logger.warn(`Failed to delete video file: ${err.message}`));
+      await unlink(videoPath).catch(err => logger.warn('Failed to delete video file'));
 
       // Normalize audio
       const normalizedAudioPath = await this.normalizeAudio(rawAudioPath);
@@ -229,7 +229,7 @@ class AudioService {
       // Delete raw audio file if normalization was successful and created a new file
       if (normalizedAudioPath !== rawAudioPath) {
         logger.info(`Deleting raw audio file to free memory: ${rawAudioPath}`);
-        await unlink(rawAudioPath).catch(err => logger.warn(`Failed to delete raw audio: ${err.message}`));
+        await unlink(rawAudioPath).catch(err => logger.warn('Failed to delete raw audio'));
       }
 
       // Get duration
@@ -242,7 +242,7 @@ class AudioService {
         duration: Math.round(duration),
       };
     } catch (error) {
-      logger.error(`Failed to process video ${fileId}`, error);
+      logger.error('Failed to process video');
       
       // Cleanup on error
       if (rawAudioPath) {

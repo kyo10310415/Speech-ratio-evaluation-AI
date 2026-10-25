@@ -52,7 +52,7 @@ class JobLock {
       return true;
 
     } catch (error) {
-      logger.error(`Failed to acquire lock: ${error.message}`);
+      logger.error('Failed to acquire lock');
       return false;
     }
   }
@@ -67,7 +67,7 @@ class JobLock {
         logger.info(`Lock released: ${this.lockName}`);
       }
     } catch (error) {
-      logger.error(`Failed to release lock: ${error.message}`);
+      logger.error('Failed to release lock');
     }
   }
 
